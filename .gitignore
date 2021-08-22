@@ -1,0 +1,11 @@
+# Removing all build related folders and files
+.catkin_tools
+.vscode
+build
+devel/**
+
+# Removing logs
+logs
+
+# Exception for the setup_env.bash file
+!devel/setup_env.bash
