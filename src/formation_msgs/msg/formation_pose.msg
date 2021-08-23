@@ -20,7 +20,7 @@ string common_frame_id
 ########################################
 # FLAGS
 ########################################
-uint8 USING_FORMATION_CENTER = 1
-uint8 USING_COMMON_FRAME = 0
-uint8 FORMATION_CENTER_IS_LEADER = 0
-uint8 USING_LEADER_ELECTION = 0
+uint8 USING_FORMATION_CENTER # T/F
+uint8 USING_COMMON_FRAME # T/F
+uint8 FORMATION_CENTER_IS_LEADER # T/F
+uint8 USING_LEADER_ELECTION # T/F

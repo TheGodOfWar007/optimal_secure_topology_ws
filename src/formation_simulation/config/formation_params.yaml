@@ -3,10 +3,34 @@
 # with a decimal will have to be treated by stringstream. The matrices need to be manually
 # translated from XmlRpc to EigenXd.
 
+# Initial pose format, row n = [x_n, y_n, z_n]
+
 formation_config: {
   USING_CUSTOM_UID: false,
   USING_FORMATION_CENTER: true,
   USING_COMMON_FRAME: false,
   num_bots: 5,
-  custom_uid_list: [],
+  uid_list: [],
+  leader_uid: [],
+  initial_pose: [0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0],
+  common_frame_name: "",
+}
+
+# Type can strictly be either directed or undirected. The self connections
+# parameter is required for verification of the adjacency matrix as well as
+# initializing one in case the matrix is not declared or the dimensions are
+# mismatched.
+
+formation_graph: {
+  self_connections: false,
+  type: "undirected",
+  A: [0.0,  1.0,  1.0,  1.0,  1.0,
+      1.0,  0.0,  1.0,  1.0,  1.0,
+      1.0,  1.0,  0.0,  1.0,  1.0,
+      1.0,  1.0,  1.0,  0.0,  1.0,
+      1.0,  1.0,  1.0,  1.0,  0.0,]
 }
