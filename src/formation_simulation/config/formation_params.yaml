@@ -1,0 +1,12 @@
+# Specifying the formation specific parameters excluding the information related 
+# to the communication graphs. Remember that the numerical paramaters unless specified
+# with a decimal will have to be treated by stringstream. The matrices need to be manually
+# translated from XmlRpc to EigenXd.
+
+formation_config: {
+  USING_CUSTOM_UID: false,
+  USING_FORMATION_CENTER: true,
+  USING_COMMON_FRAME: false,
+  num_bots: 5,
+  custom_uid_list: [],
+}

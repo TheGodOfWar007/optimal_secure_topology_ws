@@ -9,3 +9,6 @@ logs
 
 # Exception for the setup_env.bash file
 !devel/setup_env.bash
+
+# Removing the turtlebot3_autorace_2020 package since it can be cloned from teh official repository
+src/turtlebot3_autorace_2020

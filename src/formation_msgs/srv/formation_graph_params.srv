@@ -1,0 +1,28 @@
+# Request
+# Set the respective flags according to the required function for the service
+# node to handle. This service will maintain the state of the formation
+# parameters to provide an interface for updating the graph as and when required.
+
+########################################
+# FLAGS
+########################################
+uint8 REQUESTING_ADJACENCY_MATRIX = 1 
+uint8 UPDATING_ADJACENCY_MATRIX = 0
+uint8 REQUESTING_LAPLACIAN = 0
+uint8 UPDATING_LAPLACIAN = 0
+uint8 REQUESTING_IN_DEGREE_MATRIX = 0
+uint8 REQUESTING_OUT_DEGREE_MATRIX = 0
+
+########################################
+# Messages
+########################################
+std_msgs/Float64MultiArray A_
+std_msgs/Float64MultiArray L_
+
+---
+# Response
+std_msgs/Float64MultiArray A_
+std_msgs/Float64MultiArray L_
+std_msgs/Float64MultiArray D_out
+std_msgs/Float64MultiArray D_in
+bool success
