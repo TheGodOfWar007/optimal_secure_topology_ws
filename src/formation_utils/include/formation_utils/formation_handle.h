@@ -37,14 +37,14 @@ namespace FormationUtils {
             bool SPAWN_IN_RVIZ = false;
             bool BOTS_SPAWNED = false;
             bool GENERATED_CUSTOM_UID = false;
-            bool SELF_CONNECTION = false;
+            bool SELF_CONNECTIONS = false;
             bool DIRECTED_GRAPH = false;
             bool USING_CUSTOM_UID = false;
             bool USING_FORMATION_CENTER = false;
             bool USING_COMMON_FRAME = false;
             
-            uint num_bots;
-            uint len_uid;
+            int num_bots;
+            int len_uid;
             std::vector<std::string> uid_list;
             std::vector<std::string> leader_uid;
             Eigen::MatrixXf A;

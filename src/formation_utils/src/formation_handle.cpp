@@ -71,24 +71,24 @@ namespace FormationUtils {
 
             if (nh.hasParam("/formation_config/initial_pose")) {
                 XmlRpc::XmlRpcValue initialPoseConfig;
-                nh.getParam("/formation_config/initial_pose", initialPoseConfig)
-                ROS_ASSERT(initial_pose_config.getType() == XmlRpc::XmlRpcValue::TypeArray);
-                if ((initial_pose_config.size() / 3) != num_bots) {
+                nh.getParam("/formation_config/initial_pose", initialPoseConfig);
+                ROS_ASSERT(initialPoseConfig.getType() == XmlRpc::XmlRpcValue::TypeArray);
+                if ((initialPoseConfig.size() / 3) != num_bots) {
                     ROS_ERROR("Incorrect number of initial poses defined.");
                 }
                 for (int i = 0; i < num_bots; i++) {
                     Eigen::Vector3f vec;
                     for (int j = 0; j < 3; j++) {
-                        std::ostringsteam ostr;
-                        ostr << initial_pose_config[num_bots * i + j];
-                        std::instringstream istr(ostr.str());
+                        std::ostringstream ostr;
+                        ostr << initialPoseConfig[num_bots * i + j];
+                        std::istringstream istr(ostr.str());
                         istr >> vec(i);
                     }
                     initial_pose.push_back(vec);
                 }
             }
             else {
-                ROS_ERROR("Initial Pose not defined for the robots.")
+                ROS_ERROR("Initial Pose not defined for the robots.");
             }
 
             // Fetching the adjacency matrix.
@@ -103,26 +103,24 @@ namespace FormationUtils {
                 Eigen::MatrixXf mat(num_bots, num_bots);
                 for (int i = 0; i < num_bots; i++) {
                     for (int j = 0; j < num_bots; j++) {
-                        std::ostringsteam ostr;
-                        ostr << initial_pose_config[num_bots * i + j];
-                        std::instringstream istr(ostr.str());
+                        std::ostringstream ostr;
+                        ostr << AConfig[num_bots * i + j];
+                        std::istringstream istr(ostr.str());
                         istr >> mat(i, j);
                     }
                 }
                 A = mat;
-                ~mat();
             }
 
             // An integrity check for A will be added soon.
             // Calculating L from A.
-            Eigen::DiagonalMatrix D_out;
+            Eigen::MatrixXf D_out = Eigen::MatrixXf::Zero(A.rows(), A.cols());
             D_out.diagonal() = A.rowwise().sum();
             L = D_out - A;
-            ~D_out;
 
             // Spawning the models in gazebo if asked to spawn.
             if (SPAWN_IN_GAZEBO) {
-                bool spawn_success = _spawn_bots_gazebo(nh);
+                bool spawn_success = _spawn_bots_gazebo();
                 if (spawn_success) {
                     ROS_INFO("Bots successfully spawned.");
                 }
@@ -135,7 +133,7 @@ namespace FormationUtils {
             // CONSTRUCTOR ENDS.
         }
     
-    bool _spawn_bots_gazebo(ros::NodeHandle nh) {
+    bool FormationHandle::_spawn_bots_gazebo() {
         if (BOTS_SPAWNED) {
             ROS_ERROR("BOTS_SPAWNED is set. Spawn aborted.");
             return false;
@@ -143,7 +141,7 @@ namespace FormationUtils {
         else {
             ROS_INFO("Spawning the bots. BOTS_SPAWNED will be set to prevent further spawns from the same handle.");
             std::string robot_description;
-            if (nh.hasParam("robot_description") {
+            if (nh.hasParam("robot_description")) {
                 nh.getParam("robot_description", robot_description);
             }
             else {
@@ -151,9 +149,10 @@ namespace FormationUtils {
             }
             for(int i = 0; i < num_bots; i++){
                 std::string spawn_command = "rosrun gazebo_ros spawn_model -model " + uid_list[i] + "-robot_namespace " + uid_list[i] + \
-                "-x " + std::to_string(initial_pose[i].x) + "-y " + std::to_string(initial_pose[i].y) + "-z " + std::to_string(initial_pose[i].z) + \
+                "-x " + std::to_string(initial_pose[i][1]) + "-y " + std::to_string(initial_pose[i][2]) + "-z " + std::to_string(initial_pose[i][3]) + \
                 "-param " + robot_description;
-                system(spawn_command);
+                const char *spawn_command_c = spawn_command.c_str();
+                system(spawn_command_c);
             }
             BOTS_SPAWNED = true;
             SPAWN_IN_GAZEBO = false;
@@ -161,8 +160,7 @@ namespace FormationUtils {
         }
     }
 
-    bool FormationHandle::_gen_uid_strict(const int len) {
-        
+    bool FormationHandle::_gen_uid_strict() {
         std::string uid;
         static const char alphanum[] =
             "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -173,20 +171,23 @@ namespace FormationUtils {
 
         // Integrity check of the generation call.
         if (!GENERATED_CUSTOM_UID){
-            for (int j = 0; j < len_uid; ++j) {
-                uid.reserve(len);
-                for (int i = 0; i < len; ++i){
+            for (int j = 0; j < num_bots; ++j) {
+                uid.reserve(len_uid);
+                for (int i = 0; i < len_uid; ++i){
                     uid += alphanum[rand() % (sizeof(alphanum) - 1)];
                 }
                 uid_list.push_back(uid);
                 uid.clear();
             }
-            
+            ROS_ASSERT(num_bots == uid_list.size());
             return true;
         }
         else {
-            ROS_ERROR("GENERATED_CUSTOM_UID is set. Aborting further generations.")
+            ROS_ERROR("GENERATED_CUSTOM_UID is set. Aborting further generations.");
+            return false;
         }
     }
+
+    FormationHandle::~FormationHandle() { };
 
 }
