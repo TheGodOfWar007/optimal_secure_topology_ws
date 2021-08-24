@@ -5,6 +5,10 @@
 
 # Initial pose format, row n = [x_n, y_n, z_n]
 
+SPAWN_BOTS_GAZEBO: true
+SPAWN_BOTS_RVIZ: false
+len_uid: 5
+
 formation_config: {
   USING_CUSTOM_UID: false,
   USING_FORMATION_CENTER: true,
@@ -16,8 +20,7 @@ formation_config: {
                 0.0, 0.0, 0.0,
                 0.0, 0.0, 0.0,
                 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0],
-  common_frame_name: "",
+                0.0, 0.0, 0.0]
 }
 
 # Type can strictly be either directed or undirected. The self connections
@@ -26,8 +29,8 @@ formation_config: {
 # mismatched.
 
 formation_graph: {
-  self_connections: false,
-  type: "undirected",
+  DIRECTED_GRAPH: false,
+  SELF_CONNECTIONS: false,
   A: [0.0,  1.0,  1.0,  1.0,  1.0,
       1.0,  0.0,  1.0,  1.0,  1.0,
       1.0,  1.0,  0.0,  1.0,  1.0,
