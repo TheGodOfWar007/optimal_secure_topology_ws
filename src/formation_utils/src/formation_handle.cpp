@@ -4,7 +4,6 @@
 #include <Eigen/Dense>
 #include <XmlRpcValue.h>
 #include <bits/stdc++.h>
-#include <urdf/
 #include <formation_utils/formation_handle.h>
 
 namespace FormationUtils {
@@ -171,17 +170,23 @@ namespace FormationUtils {
         // using the time and get process ID system call as a seed to generate 
         // random sequences.
         srand( (unsigned) time(NULL) * getpid());
-        
-        for (int j = 0; j < len_uid; ++j) {
-            uid.reserve(len);
-            for (int i = 0; i < len; ++i){
-                uid += alphanum[rand() % (sizeof(alphanum) - 1)];
+
+        // Integrity check of the generation call.
+        if (!GENERATED_CUSTOM_UID){
+            for (int j = 0; j < len_uid; ++j) {
+                uid.reserve(len);
+                for (int i = 0; i < len; ++i){
+                    uid += alphanum[rand() % (sizeof(alphanum) - 1)];
+                }
+                uid_list.push_back(uid);
+                uid.clear();
             }
-            uid_list.push_back(uid);
-            uid.clear();
+            
+            return true;
         }
-        
-        return true;
+        else {
+            ROS_ERROR("GENERATED_CUSTOM_UID is set. Aborting further generations.")
+        }
     }
 
 }

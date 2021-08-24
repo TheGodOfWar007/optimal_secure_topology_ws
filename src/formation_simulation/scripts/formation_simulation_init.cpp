@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <bits/stdc++.h>
+#include <formation_utils/formation_handle.h>
 
 #define pass (void)0
 
@@ -8,6 +9,6 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "robot_tf_publisher");
     ros::NodeHandle n;
 
-    // Fetching the robot information from the parameter server 
-    // and spawning the robots.
+    // Declaring the FormationHandle to spawn the robots.
+    FormationUtils::FormationHandle formation_handle(n);
 }
