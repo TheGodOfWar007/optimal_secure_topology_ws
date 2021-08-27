@@ -1,10 +1,14 @@
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <string.h>
 #include <vector>
+#include <Eigen/Geometry>
 #include <Eigen/Dense>
 #include <XmlRpcValue.h>
 #include <bits/stdc++.h>
 #include <formation_utils/formation_handle.h>
+#include <gazebo_msgs/SpawnModel.h>
+#include <geometry_msgs/Pose.h>
 
 namespace FormationUtils {
 
@@ -45,15 +49,12 @@ namespace FormationUtils {
             nh.getParam("/formation_config/leader_uid", leader_uid);
 
             // Filling the UIDs.
-            if (USING_CUSTOM_UID) {
+            if (!USING_CUSTOM_UID) {
                 ROS_INFO("Using custom UIDs. Anything specified within the uid_list array will be ignored.");
                 if (!GENERATED_CUSTOM_UID) {
                     GENERATED_CUSTOM_UID = _gen_uid_strict();
                 }
-                if (GENERATED_CUSTOM_UID){
-                    ROS_INFO("UIDs generated successfully.");
-                }
-                else {
+                if (!GENERATED_CUSTOM_UID){
                     ROS_ERROR("UID Generation failed.");
                 }
             }
@@ -73,19 +74,12 @@ namespace FormationUtils {
                 XmlRpc::XmlRpcValue initialPoseConfig;
                 nh.getParam("/formation_config/initial_pose", initialPoseConfig);
                 ROS_ASSERT(initialPoseConfig.getType() == XmlRpc::XmlRpcValue::TypeArray);
-                if ((initialPoseConfig.size() / 3) != num_bots) {
+                ROS_DEBUG_STREAM("initialPoseConfig:" << initialPoseConfig);
+                if ((initialPoseConfig.size() / 6) != num_bots) {
                     ROS_ERROR("Incorrect number of initial poses defined.");
                 }
-                for (int i = 0; i < num_bots; i++) {
-                    Eigen::Vector3f vec;
-                    for (int j = 0; j < 3; j++) {
-                        std::ostringstream ostr;
-                        ostr << initialPoseConfig[num_bots * i + j];
-                        std::istringstream istr(ostr.str());
-                        istr >> vec(i);
-                    }
-                    initial_pose.push_back(vec);
-                }
+                _xmlrpc_to_matrix(num_bots, 6, initialPoseConfig, initial_pose);
+                ROS_DEBUG_STREAM("Initial Pose: \n" << initial_pose);                    
             }
             else {
                 ROS_ERROR("Initial Pose not defined for the robots.");
@@ -100,16 +94,8 @@ namespace FormationUtils {
                 if ((AConfig.size() / num_bots) != num_bots) {
                     ROS_ERROR("Incorrect adjacency matrix.");
                 }
-                Eigen::MatrixXf mat(num_bots, num_bots);
-                for (int i = 0; i < num_bots; i++) {
-                    for (int j = 0; j < num_bots; j++) {
-                        std::ostringstream ostr;
-                        ostr << AConfig[num_bots * i + j];
-                        std::istringstream istr(ostr.str());
-                        istr >> mat(i, j);
-                    }
-                }
-                A = mat;
+                _xmlrpc_to_matrix(num_bots, num_bots, AConfig, A);
+                ROS_DEBUG_STREAM("\"A\" stored successfully: \n" << A);
             }
 
             // An integrity check for A will be added soon.
@@ -121,11 +107,8 @@ namespace FormationUtils {
             // Spawning the models in gazebo if asked to spawn.
             if (SPAWN_IN_GAZEBO) {
                 bool spawn_success = _spawn_bots_gazebo();
-                if (spawn_success) {
-                    ROS_INFO("Bots successfully spawned.");
-                }
-                else {
-                    ROS_INFO("Spawn failed. Check exceptions.");
+                if (!spawn_success) {
+                    ROS_ERROR("Spawn failed. Check exceptions.");
                 }
             }
             // Spawing in Rviz will be added later.
@@ -139,20 +122,51 @@ namespace FormationUtils {
             return false;
         }
         else {
-            ROS_INFO("Spawning the bots. BOTS_SPAWNED will be set to prevent further spawns from the same handle.");
             std::string robot_description;
+            gazebo_spawn_client = nh.serviceClient<gazebo_msgs::SpawnModel>("/gazebo/spawn_urdf_model");
             if (nh.hasParam("robot_description")) {
                 nh.getParam("robot_description", robot_description);
             }
             else {
-                ROS_ERROR("Robot Description not defined. Define the robot_description parameter in the launch file");
+                ROS_ERROR("robot_description not found. Check that robot_description param is defined in the launch file or adverstised as a parameter.");
             }
+            ROS_INFO("Spawning the bots. BOTS_SPAWNED will be set to prevent further spawns from the same handle.");
             for(int i = 0; i < num_bots; i++){
-                std::string spawn_command = "rosrun gazebo_ros spawn_model -model " + uid_list[i] + "-robot_namespace " + uid_list[i] + \
-                "-x " + std::to_string(initial_pose[i][1]) + "-y " + std::to_string(initial_pose[i][2]) + "-z " + std::to_string(initial_pose[i][3]) + \
-                "-param " + robot_description;
-                const char *spawn_command_c = spawn_command.c_str();
-                system(spawn_command_c);
+                // std::string spawn_command = "rosrun gazebo_ros spawn_model -model " + uid_list[i] + " -robot_namespace " + uid_list[i] + \
+                // " -x " + std::to_string(initial_pose(i,1)) + " -y " + std::to_string(initial_pose(i,2)) + " -z " + std::to_string(initial_pose(i,3)) + \
+                // " -urdf -param robot_description";
+                // const char *spawn_command_c = spawn_command.c_str();
+                // ROS_DEBUG_STREAM("Using system call spawn string:" << spawn_command);
+                // system(spawn_command_c);
+                // spawn_command.clear();
+
+                // Converting Euler Angles to Quaternion.
+                Eigen::Quaternionf q;
+                q = _euler_to_quaternion(initial_pose(i, 3), initial_pose(i, 4), initial_pose(i, 5));
+                gazebo_msgs::SpawnModel gazebo_spawn_msg;
+                geometry_msgs::Pose pose;
+                pose.position.x = initial_pose(i,0);
+                pose.position.y = initial_pose(i,1);
+                pose.position.z = initial_pose(i,2);
+                pose.orientation.w = q.w();
+                pose.orientation.x = q.x();
+                pose.orientation.y = q.y();
+                pose.orientation.z = q.z();
+                gazebo_spawn_msg.request.model_name = uid_list[i];
+                gazebo_spawn_msg.request.model_xml = robot_description;
+                gazebo_spawn_msg.request.reference_frame = "world";
+                gazebo_spawn_msg.request.robot_namespace = uid_list[i];
+                gazebo_spawn_msg.request.initial_pose = pose;
+
+                // Calling the gazebo spawn_model client.
+                gazebo_spawn_client.call(gazebo_spawn_msg);
+                
+                if (gazebo_spawn_msg.response.success) {
+                    ROS_INFO_STREAM("Model Spawn Successfull. NS: " << uid_list[i] << " Msg: " << gazebo_spawn_msg.response.status_message);
+                }
+                else {
+                    ROS_ERROR_STREAM("Spawn failed for NS: " << uid_list[i] << " Received: " << gazebo_spawn_msg.response.status_message);
+                }
             }
             BOTS_SPAWNED = true;
             SPAWN_IN_GAZEBO = false;
@@ -165,6 +179,8 @@ namespace FormationUtils {
         static const char alphanum[] =
             "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         
+        int offset = 0; // for preventing the first digit of UID from being an alphabet, otherwise the model won't spawn.
+        
         // using the time and get process ID system call as a seed to generate 
         // random sequences.
         srand( (unsigned) time(NULL) * getpid());
@@ -174,12 +190,18 @@ namespace FormationUtils {
             for (int j = 0; j < num_bots; ++j) {
                 uid.reserve(len_uid);
                 for (int i = 0; i < len_uid; ++i){
-                    uid += alphanum[rand() % (sizeof(alphanum) - 1)];
+                    if (i == 0) {
+                        offset = 10;
+                    }
+                    uid += alphanum[(rand() % (sizeof(alphanum) - 1 - offset)) + offset];
+                    offset = 0;
                 }
                 uid_list.push_back(uid);
+                ROS_DEBUG_STREAM("" << uid);
                 uid.clear();
             }
             ROS_ASSERT(num_bots == uid_list.size());
+            ROS_INFO("UIDs generated successfully.");
             return true;
         }
         else {
@@ -188,6 +210,25 @@ namespace FormationUtils {
         }
     }
 
-    FormationHandle::~FormationHandle() { };
+    void FormationHandle::_xmlrpc_to_matrix(int rows, int cols, XmlRpc::XmlRpcValue& XmlConfig, Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& mat) {
+        mat.resize(1, rows*cols);
+        for (int i = 0; i < rows*cols; i++) {
+            std::ostringstream ostr;
+            ostr << XmlConfig[i];
+            std::istringstream istr(ostr.str());
+            istr >> mat(0,i);
+        }
+        mat.resize(rows, cols);
+    }
 
+    Eigen::Quaternionf FormationHandle::_euler_to_quaternion(float r, float p, float y) {
+        Eigen::Quaternionf q;
+        q = Eigen::AngleAxisf(r, Eigen::Vector3f::UnitX())
+            * Eigen::AngleAxisf(p, Eigen::Vector3f::UnitY())
+            * Eigen::AngleAxisf(y, Eigen::Vector3f::UnitZ());
+        
+        return q;
+    }
+
+    FormationHandle::~FormationHandle() { };
 }

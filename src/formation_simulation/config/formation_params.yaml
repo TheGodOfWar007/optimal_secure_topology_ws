@@ -3,6 +3,9 @@
 # with a decimal will have to be treated by stringstream. The matrices need to be manually
 # translated from XmlRpc to EigenXd.
 
+# Selecting the verbosity levels for nodes.
+SELECT_DEBUG_MODE: true
+
 # Initial pose format, row n = [x_n, y_n, z_n]
 
 SPAWN_BOTS_GAZEBO: true
@@ -16,11 +19,12 @@ formation_config: {
   num_bots: 5,
   uid_list: [],
   leader_uid: [],
-  initial_pose: [0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0]
+  #              x    y    z    r    p    y
+  initial_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                1.5, 0.0, 0.0, 0.0, 0.0, 0.0,
+                3.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                4.5, 0.0, 0.0, 0.0, 0.0, 0.0,
+                5.5, 0.0, 0.0, 0.0, 0.0, 0.0]
 }
 
 # Type can strictly be either directed or undirected. The self connections
