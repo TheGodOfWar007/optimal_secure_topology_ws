@@ -6,18 +6,13 @@
 ########################################
 # FLAGS
 ########################################
-uint8 REQUESTING_ADJACENCY_MATRIX = 1 
-uint8 UPDATING_ADJACENCY_MATRIX = 0
-uint8 REQUESTING_LAPLACIAN = 0
-uint8 UPDATING_LAPLACIAN = 0
-uint8 REQUESTING_IN_DEGREE_MATRIX = 0
-uint8 REQUESTING_OUT_DEGREE_MATRIX = 0
+uint8 REQUESTING_PARAMS 
+uint8 UPDATING_ADJACENCY_MATRIX
 
 ########################################
 # Messages
 ########################################
 std_msgs/Float64MultiArray A_
-std_msgs/Float64MultiArray L_
 
 ---
 # Response

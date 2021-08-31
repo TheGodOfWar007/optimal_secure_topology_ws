@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>formation_utils</name>
+  <name>behavior_consensus_control</name>
   <version>0.0.0</version>
-  <description>The formation_utils package</description>
+  <description>The behavior_consensus_control package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -13,16 +13,13 @@
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>D</license>
-  <license>O</license>
-  <license>O</license>
-  <license>T</license>
+  <license>TODO</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/formation_utils</url> -->
+  <!-- <url type="website">http://wiki.ros.org/behavior_consensus_control</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -52,10 +49,6 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>cmake_modules</depend>
-  <depend>Eigen</depend>
-  <depend>formation_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -9,6 +9,7 @@ project(formation_utils)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
     roscpp
+    formation_msgs
 )
 
 find_package(cmake_modules REQUIRED)
@@ -108,6 +109,7 @@ catkin_package(
     LIBRARIES formation_utils
     CATKIN_DEPENDS 
       roscpp
+      formation_msgs
     DEPENDS 
       Eigen
 )
@@ -127,6 +129,8 @@ include_directories(
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/formation_handle.cpp
+  src/formation_graph_util.cpp
+  src/utils.cpp
 )
 
 ## Add cmake target dependencies of the library

@@ -10,6 +10,7 @@
 #include <Eigen/Dense>
 #include <string>
 #include <XmlRpcValue.h>
+#include <formation_utils/utils.h>
 
 namespace FormationUtils {
 
@@ -28,18 +29,39 @@ namespace FormationUtils {
              */
             virtual ~FormationHandle();
 
+            bool initializeAndLoad(bool INITIALIZE_PARAMS);
+
+            Eigen::MatrixXfRowMajor getAdjacencyMatrix() {
+                return A;
+            }
+
+            Eigen::MatrixXfRowMajor getLaplacianMatrix() {
+                return L;
+            }
+
+            bool setAdjacencyMatrix(Eigen::MatrixXfRowMajor A_) {
+                A = A_;
+                return true;
+            }
+
+            bool setLaplacianMatrix(Eigen::MatrixXfRowMajor L_) {
+                L = L_;
+                return true;
+            }
+
+
         private:
+            
+            bool _initialize_params();
 
             bool _spawn_bots_gazebo();
 
             bool _gen_uid_strict();
 
-            void _xmlrpc_to_matrix(int rows, int cols, XmlRpc::XmlRpcValue& XmlConfig, Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& mat);
-
-            Eigen::Quaternionf _euler_to_quaternion(float r, float p, float y);
+        public:
+            ros::NodeHandle nh;
 
         protected:
-            ros::NodeHandle nh;
             
             bool SELF_CONNECTIONS = false;
             bool DIRECTED_GRAPH = false;
@@ -53,12 +75,12 @@ namespace FormationUtils {
             /**
              * @brief The n x n graph adjacency matrix. n = num_bots. Stores in Eigen::RowMajor format.
              */
-            Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A;
+            Eigen::MatrixXfRowMajor A;
             /**
              * @brief Stores the initial_pose in an n x 6 matrix in Eigen::RowMajor format. n = num_bots. 
              */
-            Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> initial_pose;
-            Eigen::MatrixXf L;
+            Eigen::MatrixXfRowMajor initial_pose;
+            Eigen::MatrixXfRowMajor L;
 
         private:
             bool SPAWN_IN_GAZEBO = false;

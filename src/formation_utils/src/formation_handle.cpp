@@ -1,109 +1,17 @@
 #include <ros/ros.h>
 #include <ros/console.h>
-#include <string.h>
-#include <vector>
-#include <Eigen/Geometry>
-#include <Eigen/Dense>
-#include <XmlRpcValue.h>
 #include <bits/stdc++.h>
-#include <formation_utils/formation_handle.h>
 #include <gazebo_msgs/SpawnModel.h>
 #include <geometry_msgs/Pose.h>
+#include <formation_utils/formation_handle.h>
 
 namespace FormationUtils {
 
-    FormationHandle::FormationHandle(ros::NodeHandle nh_):
-        nh(nh_)
-        {
-            // Start by fetching the important values from the parameter server
-            // and initializing the class.
-            if (nh.hasParam("/formation_config/num_bots")) {
-                nh.getParam("/formation_config/num_bots", num_bots);
-                ROS_INFO("Number of Bots in the Swarm: %u", num_bots);
-            }
-            else {
-                ROS_WARN("Number of Bots not specified, reverting to default value of 5");
-                num_bots = 5;
-            }
-
-            if (nh.hasParam("len_uid")) {
-                nh.getParam("len_uid", len_uid);
-                ROS_INFO("UID length used: %u", len_uid);
-            }
-            else {
-                ROS_WARN("UID length not specified, reverting to default value of 5");
-                len_uid = 5;
-            }
-
-            // Setting the flags, using the flags in the parameter sever is mandatory.
-            // If any flag is not specified, the default value is used.
-            nh.getParam("/formation_config/USING_CUSTOM_UID", USING_CUSTOM_UID);
-            nh.getParam("/formation_config/USING_FORMATION_CENTER", USING_FORMATION_CENTER);
-            nh.getParam("/formation_config/USING_COMMON_FRAME", USING_COMMON_FRAME);
-            nh.getParam("/formation_graph/DIRECTED_GRAPH", DIRECTED_GRAPH);
-            nh.getParam("/formation_graph/SELF_CONNECTIONS", SELF_CONNECTIONS);
-            nh.getParam("SPAWN_BOTS_GAZEBO", SPAWN_IN_GAZEBO);
-            nh.getParam("SPAWN_BOTS_RVIZ", SPAWN_IN_RVIZ);
-
-            // Get leader list irrespective of whether it is empty or not.
-            nh.getParam("/formation_config/leader_uid", leader_uid);
-
-            // Filling the UIDs.
-            if (!USING_CUSTOM_UID) {
-                ROS_INFO("Using custom UIDs. Anything specified within the uid_list array will be ignored.");
-                if (!GENERATED_CUSTOM_UID) {
-                    GENERATED_CUSTOM_UID = _gen_uid_strict();
-                }
-                if (!GENERATED_CUSTOM_UID){
-                    ROS_ERROR("UID Generation failed.");
-                }
-            }
-            else {
-                nh.getParam("/formation_config/uid_list", uid_list);
-                if (uid_list.size() != num_bots) {
-                    ROS_ERROR("Using custom UIDs but incorrect number of UIDs of bots specified.");
-                }
-                else {
-                    ROS_INFO("UIDs loaded.");
-                }
-            }
-
-            // Filling the initial pose.
-
-            if (nh.hasParam("/formation_config/initial_pose")) {
-                XmlRpc::XmlRpcValue initialPoseConfig;
-                nh.getParam("/formation_config/initial_pose", initialPoseConfig);
-                ROS_ASSERT(initialPoseConfig.getType() == XmlRpc::XmlRpcValue::TypeArray);
-                ROS_DEBUG_STREAM("initialPoseConfig:" << initialPoseConfig);
-                if ((initialPoseConfig.size() / 6) != num_bots) {
-                    ROS_ERROR("Incorrect number of initial poses defined.");
-                }
-                _xmlrpc_to_matrix(num_bots, 6, initialPoseConfig, initial_pose);
-                ROS_DEBUG_STREAM("Initial Pose: \n" << initial_pose);                    
-            }
-            else {
-                ROS_ERROR("Initial Pose not defined for the robots.");
-            }
-
-            // Fetching the adjacency matrix.
-
-            if (nh.hasParam("/formation_graph/A")) {
-                XmlRpc::XmlRpcValue AConfig;
-                nh.getParam("/formation_graph/A", AConfig);
-                ROS_ASSERT(AConfig.getType() == XmlRpc::XmlRpcValue::TypeArray);
-                if ((AConfig.size() / num_bots) != num_bots) {
-                    ROS_ERROR("Incorrect adjacency matrix.");
-                }
-                _xmlrpc_to_matrix(num_bots, num_bots, AConfig, A);
-                ROS_DEBUG_STREAM("\"A\" stored successfully: \n" << A);
-            }
-
-            // An integrity check for A will be added soon.
-            // Calculating L from A.
-            Eigen::MatrixXf D_out = Eigen::MatrixXf::Zero(A.rows(), A.cols());
-            D_out.diagonal() = A.rowwise().sum();
-            L = D_out - A;
-
+    FormationHandle::FormationHandle(ros::NodeHandle nh_): nh(nh_) { }
+    
+    bool FormationHandle::initializeAndLoad(bool INITIALIZE_PARAMS) {
+        if(INITIALIZE_PARAMS) {
+            _initialize_params();
             // Spawning the models in gazebo if asked to spawn.
             if (SPAWN_IN_GAZEBO) {
                 bool spawn_success = _spawn_bots_gazebo();
@@ -112,10 +20,106 @@ namespace FormationUtils {
                 }
             }
             // Spawing in Rviz will be added later.
-
-            // CONSTRUCTOR ENDS.
         }
-    
+        else {
+            ROS_WARN("The parameters must be loaded at least once. Remeber to keep INITIALIZE_PARAMS when calling the handle for the first time.");
+        }
+
+        return true;
+    }
+
+    bool FormationHandle::_initialize_params() {
+        // Start by fetching the important values from the parameter server
+        if (nh.hasParam("/formation_config/num_bots")) {
+            nh.getParam("/formation_config/num_bots", num_bots);
+            ROS_INFO("Number of Bots in the Swarm: %u", num_bots);
+        }
+        else {
+            ROS_WARN("Number of Bots not specified, reverting to default value of 5");
+            num_bots = 5;
+        }
+
+        if (nh.hasParam("len_uid")) {
+            nh.getParam("len_uid", len_uid);
+            ROS_INFO("UID length used: %u", len_uid);
+        }
+        else {
+            ROS_WARN("UID length not specified, reverting to default value of 5");
+            len_uid = 5;
+        }
+
+        // Setting the flags, using the flags in the parameter sever is mandatory.
+        // If any flag is not specified, the default value is used.
+        nh.getParam("/formation_config/USING_CUSTOM_UID", USING_CUSTOM_UID);
+        nh.getParam("/formation_config/USING_FORMATION_CENTER", USING_FORMATION_CENTER);
+        nh.getParam("/formation_config/USING_COMMON_FRAME", USING_COMMON_FRAME);
+        nh.getParam("/formation_graph/DIRECTED_GRAPH", DIRECTED_GRAPH);
+        nh.getParam("/formation_graph/SELF_CONNECTIONS", SELF_CONNECTIONS);
+        nh.getParam("SPAWN_BOTS_GAZEBO", SPAWN_IN_GAZEBO);
+        nh.getParam("SPAWN_BOTS_RVIZ", SPAWN_IN_RVIZ);
+
+        // Get leader list irrespective of whether it is empty or not.
+        nh.getParam("/formation_config/leader_uid", leader_uid);
+
+        // Filling the UIDs.
+        if (!USING_CUSTOM_UID) {
+            ROS_INFO("Using custom UIDs. Anything specified within the uid_list array will be ignored.");
+            if (!GENERATED_CUSTOM_UID) {
+                GENERATED_CUSTOM_UID = _gen_uid_strict();
+            }
+            if (!GENERATED_CUSTOM_UID){
+                ROS_ERROR("UID Generation failed.");
+            }
+        }
+        else {
+            nh.getParam("/formation_config/uid_list", uid_list);
+            if (uid_list.size() != num_bots) {
+                ROS_ERROR("Using custom UIDs but incorrect number of UIDs of bots specified.");
+            }
+            else {
+                ROS_INFO("UIDs loaded.");
+            }
+        }
+
+        // Filling the initial pose.
+
+        if (nh.hasParam("/formation_config/initial_pose")) {
+            XmlRpc::XmlRpcValue initialPoseConfig;
+            nh.getParam("/formation_config/initial_pose", initialPoseConfig);
+            ROS_ASSERT(initialPoseConfig.getType() == XmlRpc::XmlRpcValue::TypeArray);
+            ROS_DEBUG_STREAM("initialPoseConfig:" << initialPoseConfig);
+            if ((initialPoseConfig.size() / 6) != num_bots) {
+                ROS_ERROR("Incorrect number of initial poses defined.");
+            }
+            xmlrpc_to_matrix<Eigen::MatrixXfRowMajor>(num_bots, 6, initialPoseConfig, initial_pose);
+            ROS_DEBUG_STREAM("Initial Pose: \n" << initial_pose);                    
+        }
+        else {
+            ROS_ERROR("Initial Pose not defined for the robots.");
+        }
+
+        // Fetching the adjacency matrix.
+
+        if (nh.hasParam("/formation_graph/A")) {
+            XmlRpc::XmlRpcValue AConfig;
+            nh.getParam("/formation_graph/A", AConfig);
+            ROS_ASSERT(AConfig.getType() == XmlRpc::XmlRpcValue::TypeArray);
+            if ((AConfig.size() / num_bots) != num_bots) {
+                ROS_ERROR("Incorrect adjacency matrix.");
+            }
+            xmlrpc_to_matrix<Eigen::MatrixXfRowMajor>(num_bots, num_bots, AConfig, A);
+            ROS_DEBUG_STREAM("\"A\" stored successfully: \n" << A);
+        }
+
+        // An integrity check for A will be added soon.
+        // Calculating L from A.
+        Eigen::MatrixXfRowMajor D_out = Eigen::MatrixXfRowMajor::Zero(A.rows(), A.cols());
+        D_out.diagonal() = A.rowwise().sum();
+        L = D_out - A;
+
+        return true;
+    }
+
     bool FormationHandle::_spawn_bots_gazebo() {
         if (BOTS_SPAWNED) {
             ROS_ERROR("BOTS_SPAWNED is set. Spawn aborted.");
@@ -142,7 +146,7 @@ namespace FormationUtils {
 
                 // Converting Euler Angles to Quaternion.
                 Eigen::Quaternionf q;
-                q = _euler_to_quaternion(initial_pose(i, 3), initial_pose(i, 4), initial_pose(i, 5));
+                q = euler_to_quaternion(initial_pose(i, 3), initial_pose(i, 4), initial_pose(i, 5));
                 gazebo_msgs::SpawnModel gazebo_spawn_msg;
                 geometry_msgs::Pose pose;
                 pose.position.x = initial_pose(i,0);
@@ -162,10 +166,10 @@ namespace FormationUtils {
                 gazebo_spawn_client.call(gazebo_spawn_msg);
                 
                 if (gazebo_spawn_msg.response.success) {
-                    ROS_INFO_STREAM("Model Spawn Successfull. NS: " << uid_list[i] << " Msg: " << gazebo_spawn_msg.response.status_message);
+                    ROS_INFO_STREAM("NS: " << uid_list[i] << " Msg: " << gazebo_spawn_msg.response.status_message);
                 }
                 else {
-                    ROS_ERROR_STREAM("Spawn failed for NS: " << uid_list[i] << " Received: " << gazebo_spawn_msg.response.status_message);
+                    ROS_ERROR_STREAM("NS: " << uid_list[i] << " Received: " << gazebo_spawn_msg.response.status_message);
                 }
             }
             BOTS_SPAWNED = true;
@@ -208,26 +212,6 @@ namespace FormationUtils {
             ROS_ERROR("GENERATED_CUSTOM_UID is set. Aborting further generations.");
             return false;
         }
-    }
-
-    void FormationHandle::_xmlrpc_to_matrix(int rows, int cols, XmlRpc::XmlRpcValue& XmlConfig, Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& mat) {
-        mat.resize(1, rows*cols);
-        for (int i = 0; i < rows*cols; i++) {
-            std::ostringstream ostr;
-            ostr << XmlConfig[i];
-            std::istringstream istr(ostr.str());
-            istr >> mat(0,i);
-        }
-        mat.resize(rows, cols);
-    }
-
-    Eigen::Quaternionf FormationHandle::_euler_to_quaternion(float r, float p, float y) {
-        Eigen::Quaternionf q;
-        q = Eigen::AngleAxisf(r, Eigen::Vector3f::UnitX())
-            * Eigen::AngleAxisf(p, Eigen::Vector3f::UnitY())
-            * Eigen::AngleAxisf(y, Eigen::Vector3f::UnitZ());
-        
-        return q;
     }
 
     FormationHandle::~FormationHandle() { };
