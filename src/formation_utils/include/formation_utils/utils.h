@@ -2,18 +2,24 @@
 #define UTIL_H
 
 #include <ros/ros.h>
-#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <XmlRpcValue.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <geometry_msgs/Quaternion.h>
 
 namespace Eigen {
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXfRowMajor;
 }
 
 namespace FormationUtils{
+
+    Eigen::Quaterniond euler_to_quaternion(float r, float p, float y);
+
+    Eigen::Vector3d quaternion_to_euler(Eigen::Quaterniond q);
     
+    void saturation_function(double &e, double &max, double &min);
+
     template <class T>
     void xmlrpc_to_matrix(int rows, int cols, XmlRpc::XmlRpcValue& XmlConfig, T& mat) {
         mat.resize(1, rows*cols);
@@ -26,7 +32,6 @@ namespace FormationUtils{
         mat.resize(rows, cols);
     }
 
-    Eigen::Quaternionf euler_to_quaternion(float r, float p, float y);
 
     template <class T>
     void matrixEigentoFloatMsg(Eigen::MatrixBase<T> &mat, std_msgs::Float64MultiArray &msg) {

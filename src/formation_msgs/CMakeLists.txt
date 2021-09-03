@@ -51,12 +51,12 @@ find_package(catkin REQUIRED
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  pose_uid.msg
-  pose2d_uid.msg
-  formation_pose2d.msg
-  formation_pose.msg
-  formation_pose2d_stamped.msg
-  formation_pose_stamped.msg
+  PoseUID.msg
+  PoseUIDWithCovariance.msg
+  FormationPose.msg
+  FormationPoseWithCovariance.msg
+  FormationPoseStamped.msg
+  FormationPoseWithCovarianceStamped.msg
 )
 
 ## Generate services in the 'srv' folder

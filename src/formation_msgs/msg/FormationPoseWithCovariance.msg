@@ -5,7 +5,7 @@
 ########################################
 # Messages
 ########################################
-pose2d_uid[] bot_sel
+PoseUIDWithCovariance[] PoseArray
 
 ########################################
 # CONSTANTS
@@ -14,7 +14,7 @@ pose2d_uid[] bot_sel
 # for avoiding querying the UID fields in bot_pose. Also the formation
 # center UID.
 string[] uid
-string center_uid # The formation center bot's UID.
+string center_uid # The formation center.
 string common_frame_id
 
 ########################################

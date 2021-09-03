@@ -127,6 +127,8 @@ namespace FormationUtils {
         }
         else {
             std::string robot_description;
+            // Wait for the service to be advertise, otherwise the node will throw an error since gazebo takes time to load.
+            ros::service::waitForService("/gazebo/spawn_urdf_model", -1);
             gazebo_spawn_client = nh.serviceClient<gazebo_msgs::SpawnModel>("/gazebo/spawn_urdf_model");
             if (nh.hasParam("robot_description")) {
                 nh.getParam("robot_description", robot_description);
@@ -136,16 +138,10 @@ namespace FormationUtils {
             }
             ROS_INFO("Spawning the bots. BOTS_SPAWNED will be set to prevent further spawns from the same handle.");
             for(int i = 0; i < num_bots; i++){
-                // std::string spawn_command = "rosrun gazebo_ros spawn_model -model " + uid_list[i] + " -robot_namespace " + uid_list[i] + \
-                // " -x " + std::to_string(initial_pose(i,1)) + " -y " + std::to_string(initial_pose(i,2)) + " -z " + std::to_string(initial_pose(i,3)) + \
-                // " -urdf -param robot_description";
-                // const char *spawn_command_c = spawn_command.c_str();
-                // ROS_DEBUG_STREAM("Using system call spawn string:" << spawn_command);
-                // system(spawn_command_c);
-                // spawn_command.clear();
-
+                // Setting the tf_prefix to remap transforms through namespaces.
+                nh.setParam("tf_prefix", uid_list[i]);
                 // Converting Euler Angles to Quaternion.
-                Eigen::Quaternionf q;
+                Eigen::Quaterniond q;
                 q = euler_to_quaternion(initial_pose(i, 3), initial_pose(i, 4), initial_pose(i, 5));
                 gazebo_msgs::SpawnModel gazebo_spawn_msg;
                 geometry_msgs::Pose pose;
