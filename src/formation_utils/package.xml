@@ -56,6 +56,13 @@
   <depend>cmake_modules</depend>
   <depend>Eigen</depend>
   <depend>formation_msgs</depend>
+  <depend>orocos-kdl</depend>
+  <depend>kdl_parser</depend>
+  <depend>urdf</depend>
+  <depend>urdf_parser_plugin</depend>
+  <depend>robot_state_publisher_modified</depend>
+  <depend>tf2</depend>
+
 
 
   <!-- The export tag contains other, unspecified, tags -->

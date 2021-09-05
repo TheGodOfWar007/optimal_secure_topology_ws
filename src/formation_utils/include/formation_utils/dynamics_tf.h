@@ -74,7 +74,17 @@ namespace FormationUtils{
                 ROS_ASSERT(proj_distance > 0 && max_angular_vel > 0);
             };
 
+            ProjectionPoint2DTf(double _proj_distance, double _max_angular_vel, double _min_angular_vel) 
+            : proj_distance(_proj_distance),
+              max_angular_vel(_max_angular_vel),
+              min_angular_vel(_min_angular_vel)
+            {
+                ROS_ASSERT(proj_distance > 0 && max_angular_vel > 0);
+            }
+
             ~ProjectionPoint2DTf() { };
+
+            bool init();
 
             Eigen::Vector2d UniToSiDynamicsStateTf(Eigen::Vector2d &bot_pos2d, double &theta);
 
@@ -84,14 +94,40 @@ namespace FormationUtils{
 
             Eigen::Vector2d SiToUniDynamicsTwistTf(Eigen::Vector2d &point_vel, double &theta);
 
-            void setProjectionDistance(double _proj_distance){ proj_distance = _proj_distance; };
+            void setProjectionDistance(double &_proj_distance){ proj_distance = _proj_distance; };
 
-            void setMaxAngularVelocity(double _max_ang_vel){ max_angular_vel = _max_ang_vel; };
+            void setProjectionDistanceLimits(double &_max_proj_dist, double &_min_proj_dist) {
+                max_projection_dist = _max_proj_dist;
+                min_projection_dist = _min_proj_dist;
+
+                ROS_ASSERT(max_projection_dist > min_projection_dist);
+                ROS_ASSERT((max_projection_dist > 0) && (min_projection_dist > 0));
+            }
+
+            void setAngularVelocityLimits(double &_max_angular_velocity, double &_min_angular_velocity){
+                max_angular_vel = _max_angular_velocity; 
+                min_angular_vel = _min_angular_velocity;
+            }
+
+            void getProjectionDistance(double &_proj_distance) {
+                _proj_distance = proj_distance;
+            }
+
+            void getAngularVelocityLimits(double &_max_angular_velocity, double &_min_angular_velocity) {
+                _max_angular_velocity = max_angular_vel;
+                _min_angular_velocity = min_angular_vel;
+            }
 
         protected:
             double proj_distance;
             double max_angular_vel;
             double min_angular_vel;
+            double max_projection_dist;
+            double min_projection_dist;
+        
+        protected:
+            bool USE_ADAPTIVE_PROJECTION_DISTANCE;
+            bool USE_STATIC_TRANSFORMS;
     };
 }
 

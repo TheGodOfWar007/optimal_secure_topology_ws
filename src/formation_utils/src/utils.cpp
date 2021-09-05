@@ -7,6 +7,8 @@ namespace FormationUtils{
             * Eigen::AngleAxisd(p, Eigen::Vector3d::UnitY())
             * Eigen::AngleAxisd(y, Eigen::Vector3d::UnitZ());
         
+        q.normalize();
+        
         return q;
     }
 

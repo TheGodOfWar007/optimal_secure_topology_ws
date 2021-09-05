@@ -53,6 +53,7 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <depend>formation_utils</depend>
+  <depend>robot_state_publisher_modified</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

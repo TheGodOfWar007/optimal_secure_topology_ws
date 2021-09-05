@@ -29,34 +29,37 @@ namespace FormationUtils {
              */
             virtual ~FormationHandle();
 
-            bool initializeAndLoad(bool INITIALIZE_PARAMS);
+            virtual bool initializeAndLoad(bool INITIALIZE_PARAMS);
 
-            Eigen::MatrixXfRowMajor getAdjacencyMatrix() {
+            virtual Eigen::MatrixXfRowMajor getAdjacencyMatrix() {
                 return A;
             }
 
-            Eigen::MatrixXfRowMajor getLaplacianMatrix() {
+            virtual Eigen::MatrixXfRowMajor getLaplacianMatrix() {
                 return L;
             }
 
-            bool setAdjacencyMatrix(Eigen::MatrixXfRowMajor A_) {
+            virtual bool setAdjacencyMatrix(Eigen::MatrixXfRowMajor A_) {
                 A = A_;
                 return true;
             }
 
-            bool setLaplacianMatrix(Eigen::MatrixXfRowMajor L_) {
+            virtual bool setLaplacianMatrix(Eigen::MatrixXfRowMajor L_) {
                 L = L_;
                 return true;
             }
 
+            virtual const std::vector<std::string>* getUIDListPtr() {
+                return &uid_list;
+            }
 
         private:
             
-            bool _initialize_params();
+            virtual bool _initialize_params();
 
-            bool _spawn_bots_gazebo();
+            virtual bool _spawn_bots_gazebo();
 
-            bool _gen_uid_strict();
+            virtual bool _gen_uid_strict();
 
         public:
             ros::NodeHandle nh;

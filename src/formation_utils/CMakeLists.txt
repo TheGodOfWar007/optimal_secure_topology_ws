@@ -10,10 +10,17 @@ project(formation_utils)
 find_package(catkin REQUIRED
     roscpp
     formation_msgs
+    robot_state_publisher_modified
+    kdl_parser
+    urdf
+    urdf_parser_plugin
+    tf2
 )
 
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
+
+find_library(KDL_LIBRARY REQUIRED NAMES orocos-kdl HINTS ${orocos_kdl_LIBRARY_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -110,6 +117,7 @@ catkin_package(
     CATKIN_DEPENDS 
       roscpp
       formation_msgs
+      robot_state_publisher_modified
     DEPENDS 
       Eigen
 )
@@ -122,8 +130,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
-    ${catkin_INCLUDE_DIRS}
+    ${robot_state_publisher_modified_INCLUDE_DIRS}
     ${Eigen_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -131,6 +140,7 @@ add_library(${PROJECT_NAME}
   src/formation_handle.cpp
   src/formation_graph_util.cpp
   src/utils.cpp
+  src/formation_state_publisher.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -155,6 +165,8 @@ add_library(${PROJECT_NAME}
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
+  ${EIGEN3_LIBS}
+  ${orocos_kdl_LIBRARIES}
   ${catkin_LIBRARIES}
 )
 

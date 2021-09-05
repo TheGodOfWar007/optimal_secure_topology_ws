@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <ros/timer.h>
 #include <bits/stdc++.h>
 #include <gazebo_msgs/SpawnModel.h>
 #include <geometry_msgs/Pose.h>
@@ -127,8 +128,6 @@ namespace FormationUtils {
         }
         else {
             std::string robot_description;
-            // Wait for the service to be advertise, otherwise the node will throw an error since gazebo takes time to load.
-            ros::service::waitForService("/gazebo/spawn_urdf_model", -1);
             gazebo_spawn_client = nh.serviceClient<gazebo_msgs::SpawnModel>("/gazebo/spawn_urdf_model");
             if (nh.hasParam("robot_description")) {
                 nh.getParam("robot_description", robot_description);
@@ -139,7 +138,12 @@ namespace FormationUtils {
             ROS_INFO("Spawning the bots. BOTS_SPAWNED will be set to prevent further spawns from the same handle.");
             for(int i = 0; i < num_bots; i++){
                 // Setting the tf_prefix to remap transforms through namespaces.
-                nh.setParam("tf_prefix", uid_list[i]);
+                std::string current_uid = uid_list[i];
+                ROS_DEBUG_STREAM("Current UID: " << current_uid);
+                nh.setParam("tf_prefix", current_uid);
+                ROS_DEBUG_STREAM("TF Prefix Set: " << current_uid);
+                // Wait for the service to be advertise, otherwise the node will throw an error since gazebo takes time to load.
+                ros::service::waitForService("/gazebo/spawn_urdf_model", -1);
                 // Converting Euler Angles to Quaternion.
                 Eigen::Quaterniond q;
                 q = euler_to_quaternion(initial_pose(i, 3), initial_pose(i, 4), initial_pose(i, 5));
@@ -160,7 +164,14 @@ namespace FormationUtils {
 
                 // Calling the gazebo spawn_model client.
                 gazebo_spawn_client.call(gazebo_spawn_msg);
+                // After calling for the first time, wait for physics dynamic reconfigure to get ready, so that, 
+                // when the robot spawns, its control plugin gets enough time to utilize the first tf_prefix
+                // otherwise it will lead to the first robot using the tf_prefix of the next robot. This is 
+                // a time synchronization problem.
                 
+                ros::Duration(2).sleep();
+                
+
                 if (gazebo_spawn_msg.response.success) {
                     ROS_INFO_STREAM("NS: " << uid_list[i] << " Msg: " << gazebo_spawn_msg.response.status_message);
                 }

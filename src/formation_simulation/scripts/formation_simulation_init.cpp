@@ -3,8 +3,8 @@
 #include <bits/stdc++.h>
 #include <formation_utils/formation_handle.h>
 #include <formation_utils/formation_graph_util.h>
-
-#define pass (void)0
+#include <formation_utils/formation_state_publisher.h>
+#include <formation_utils/turtlebot3_fake_transforms.hpp>
 
 int main(int argc, char** argv) {
     // Initializing the ROS node handle
@@ -28,7 +28,24 @@ int main(int argc, char** argv) {
     // Now entering the spinning part.
     FormationUtils::GraphInterface gi(&formation_handle);
 
+    FormationUtils::FormationStatePublisher fsp(&formation_handle);
+
+    FormationUtils::Turtlebot3FakeLocalization tb3_fake_loc(&formation_handle);
+
+    tb3_fake_loc.init();
+
+    tb3_fake_loc.setOdomMode(ODOM_IS_SAME_AS_MAP);
+
+
+    if (!fsp.init()){
+        ROS_ERROR("Formation State Publisher failed to initialize.");
+    }
+
     gi.InterfaceServiceAdvertise();
+
+    fsp.publishFixedTransforms();
+
+    tb3_fake_loc.advertiseTransforms();
 
     ros::Rate r(10);
 
@@ -36,7 +53,7 @@ int main(int argc, char** argv) {
         // For now we will go by single threaded spinning. But as the number of packages
         // changes, we will consider changing it to multi threaded spinning with custom
         // callback queues. Check: http://wiki.ros.org/roscpp/Overview/Callbacks%20and%20Spinning#Multi-threaded_Spinning
-
+        
         ros::spinOnce();
         r.sleep();
     }

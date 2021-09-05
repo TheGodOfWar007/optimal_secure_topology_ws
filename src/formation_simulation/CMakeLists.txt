@@ -10,7 +10,9 @@ project(formation_simulation)
 find_package(catkin REQUIRED
     roscpp
     formation_utils
+    robot_state_publisher_modified
 )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

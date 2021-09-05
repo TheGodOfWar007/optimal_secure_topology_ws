@@ -12,12 +12,14 @@ SPAWN_BOTS_GAZEBO: true
 SPAWN_BOTS_RVIZ: false
 len_uid: 5
 
+TURTLEBOT3_MODEL: burger
+
 formation_config: {
-  USING_CUSTOM_UID: false,
+  USING_CUSTOM_UID: true,
   USING_FORMATION_CENTER: true,
   USING_COMMON_FRAME: false,
   num_bots: 5,
-  uid_list: [],
+  uid_list: [BOT1, BOT2, BOT3, BOT4, BOT5],
   leader_uid: [],
   #              x    y    z    r    p    y
   initial_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -40,4 +42,8 @@ formation_graph: {
       1.0,  1.0,  0.0,  1.0,  1.0,
       1.0,  1.0,  1.0,  0.0,  1.0,
       1.0,  1.0,  1.0,  1.0,  0.0,]
+}
+
+robot_state_publisher: {
+  USE_STATIC_TF: true,
 }

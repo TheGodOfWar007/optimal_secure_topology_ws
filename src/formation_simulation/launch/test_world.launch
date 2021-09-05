@@ -1,0 +1,15 @@
+<launch>
+    <rosparam file="$(find formation_simulation)/config/formation_params.yaml"/>
+    <arg name="world_file" default="office_env_large.world"/>
+    <arg name="world" value="$(find formation_simulation)/worlds/$(arg world_file)"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world)" />
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include> 
+   
+</launch>

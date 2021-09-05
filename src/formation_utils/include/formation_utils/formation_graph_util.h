@@ -13,10 +13,10 @@ namespace FormationUtils {
 
             virtual ~GraphInterface();
 
-            void InterfaceServiceAdvertise();
+            virtual void InterfaceServiceAdvertise();
 
         protected:
-            bool InterfaceServiceCallback(formation_msgs::FormationGraphParams::Request &req,
+            virtual bool InterfaceServiceCallback(formation_msgs::FormationGraphParams::Request &req,
                                 formation_msgs::FormationGraphParams::Response &res);
 
         protected:

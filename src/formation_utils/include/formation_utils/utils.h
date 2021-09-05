@@ -7,9 +7,16 @@
 #include <XmlRpcValue.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/Quaternion.h>
+#include <math.h>
+
+#define DEG2RAD(x)              (x * M_PI/180) // x*pi/180
+#define RAD2DEG(x)              (x * 180/M_PI) // x*180/pi
+
+#define pass                    (void)0 // Similar to python's pass. Defined for any possible future use. You are advised against using this though unless very necessary.
 
 namespace Eigen {
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXfRowMajor;
+typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdRowMajor;
 }
 
 namespace FormationUtils{
