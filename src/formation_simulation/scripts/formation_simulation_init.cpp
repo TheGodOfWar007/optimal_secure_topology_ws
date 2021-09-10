@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv) {
     // Initializing the ROS node handle
-    ros::init(argc, argv, "robot_tf_publisher");
+    ros::init(argc, argv, "formation_init_node");
     ros::NodeHandle n;
 
     bool DEBUG_MODE;

@@ -138,6 +138,11 @@ add_executable(
     formation_simulation_init 
     scripts/formation_simulation_init.cpp)
 
+add_executable(
+    test_motion_planner
+    scripts/test_motion_planner.cpp
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -154,6 +159,10 @@ target_link_libraries(
     ${catkin_LIBRARIES}
 )
 
+target_link_libraries(
+    test_motion_planner
+    ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

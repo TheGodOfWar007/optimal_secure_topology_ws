@@ -12,6 +12,15 @@
 
    
     <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_burger.urdf.xacro" />
-    <node pkg="formation_simulation" type="formation_simulation_init" name="simulation_initializer"/>
-   
+    <node pkg="formation_simulation" type="formation_simulation_init" name="simulation_initializer_node"/>
+    
+    <!-- Starting the Motion Planner Node. -->
+    <node pkg="formation_simulation" type="test_motion_planner" name="test_motion_planner_node"/>
+
+    <arg name="rvizconfig" default="$(find formation_simulation)/config/rviz_config.rviz" />
+    <!-- Calling RViz to visualize the robots with its predefined config file. -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+    <!-- Calling the Joint State Publisher to publish the joint states of all the robots. -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 </launch>

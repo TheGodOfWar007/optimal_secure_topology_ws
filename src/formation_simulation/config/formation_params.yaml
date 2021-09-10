@@ -26,7 +26,7 @@ formation_config: {
                 1.5, 0.0, 0.0, 0.0, 0.0, 0.0,
                 3.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 4.5, 0.0, 0.0, 0.0, 0.0, 0.0,
-                5.5, 0.0, 0.0, 0.0, 0.0, 0.0]
+                5.5, 0.0, 0.0, 0.0, 0.0, 0.0],
 }
 
 # Type can strictly be either directed or undirected. The self connections
@@ -46,4 +46,17 @@ formation_graph: {
 
 robot_state_publisher: {
   USE_STATIC_TF: true,
+}
+
+test_motion_planner: {
+  num_bots: 5,
+  USE_STATIC_TRANSFORM: true,
+  uid_list: [BOT1, BOT2, BOT3, BOT4, BOT5],
+  planner_center: BOT5,
+  #                   x   y 
+  static_formation: [0.0, 0.0,
+                     2.0, 0.0,
+                     2.0, 2.0,
+                     0.0, 2.0,
+                     1.0, 1.0]
 }

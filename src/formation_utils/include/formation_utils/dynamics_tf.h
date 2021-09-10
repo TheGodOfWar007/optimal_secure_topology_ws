@@ -11,6 +11,14 @@
 #include <Eigen/Geometry>
 #include <formation_utils/utils.h>
 #include <math.h>
+#include <ros/ros.h>
+#include <tf2_ros/static_transform_broadcaster.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/transform_datatypes.h>
+#include <formation_msgs/PoseUID.h>
+
 
 namespace FormationUtils{
 
@@ -36,7 +44,6 @@ namespace FormationUtils{
                 return translated_twist;
             }
 
-        protected:
             Eigen::Vector3d extractRPYfromQuaternionMsg(geometry_msgs::Quaternion &m){
                 Eigen::Quaterniond q;
                 tf::quaternionMsgToEigen(m, q);
@@ -84,19 +91,20 @@ namespace FormationUtils{
 
             ~ProjectionPoint2DTf() { };
 
-            bool init();
+            Eigen::Vector2d UniToSiDynamicsStateTf(Eigen::Vector2d bot_pos2d, double theta);
 
-            Eigen::Vector2d UniToSiDynamicsStateTf(Eigen::Vector2d &bot_pos2d, double &theta);
-
-            Eigen::Vector2d UniToSiDynamicsTwistTf(Eigen::Vector2d &bot_twist2d, double &theta);
+            Eigen::Vector2d UniToSiDynamicsTwistTf(Eigen::Vector2d bot_twist2d, double theta);
 
             // Eigen::Vector2d SiToUniDynamicsStateTf(Eigen::Vector2d &point_pos, double &theta);
 
-            Eigen::Vector2d SiToUniDynamicsTwistTf(Eigen::Vector2d &point_vel, double &theta);
+            Eigen::Vector2d SiToUniDynamicsTwistTf(Eigen::Vector2d point_vel, double theta);
 
-            void setProjectionDistance(double &_proj_distance){ proj_distance = _proj_distance; };
+            void setProjectionDistance(double _proj_distance){
+                proj_distance = _proj_distance; 
+                saturation_function(proj_distance, max_projection_dist, min_projection_dist);
+            }
 
-            void setProjectionDistanceLimits(double &_max_proj_dist, double &_min_proj_dist) {
+            void setProjectionDistanceLimits(double _max_proj_dist, double _min_proj_dist) {
                 max_projection_dist = _max_proj_dist;
                 min_projection_dist = _min_proj_dist;
 
@@ -104,7 +112,7 @@ namespace FormationUtils{
                 ROS_ASSERT((max_projection_dist > 0) && (min_projection_dist > 0));
             }
 
-            void setAngularVelocityLimits(double &_max_angular_velocity, double &_min_angular_velocity){
+            void setAngularVelocityLimits(double _max_angular_velocity, double _min_angular_velocity){
                 max_angular_vel = _max_angular_velocity; 
                 min_angular_vel = _min_angular_velocity;
             }
@@ -118,12 +126,68 @@ namespace FormationUtils{
                 _min_angular_velocity = min_angular_vel;
             }
 
+            void getProjectionDistanceLimits(double &_max_proj_dist, double &_min_proj_dist) {
+                _max_proj_dist = max_projection_dist;
+                _min_proj_dist = min_projection_dist;
+            }
+
+            void setUidList(std::vector<std::string> _uid_list) {
+                uid_list = _uid_list;
+            }
+
+            void setFrameIDs(const std::string _point_frame_id, const std::string _parent_frame_id) {
+                point_frame_id = _point_frame_id;
+                parent_frame_id = _parent_frame_id;
+            }
+
+            void publishTransform(const std::string prefix_tf_with);
+
+            void publishTransformsByUID();
+
+            template <class T>
+            void BotToPointTf(T &pose, std::string prefix_tf_with){
+                tf2_ros::TransformListener tflistener(tf_buffer);
+                transform_container = tf_buffer.lookupTransform(prefix_tf_with + "/" + parent_frame_id, prefix_tf_with + "/" + point_frame_id, ros::Time::now());
+                tf2::doTransform<T>(pose, pose, transform_container);
+            }
+
+            template <class T>
+            void BotToPointTfByUID(std::vector<T> &fpose_uid){
+                ROS_ASSERT(fpose_uid.size() == uid_list.size());
+                for (int i = 0; i < uid_list.size(); i++) {
+                    BotToPointTf<T>(fpose_uid[i], uid_list[i]);
+                }
+            }
+
+            template <class T>
+            void PointToBotTf(T &point_pose, std::string prefix_tf_with){
+                tf2_ros::TransformListener tflistener(tf_buffer);
+                transform_container = tf_buffer.lookupTransform(prefix_tf_with + "/" + point_frame_id, prefix_tf_with + "/" + parent_frame_id, ros::Time::now());
+                tf2::doTransform<T>(point_pose, point_pose, transform_container);
+            }
+
+            template <class T>
+            void PointToBotTfByUID(std::vector<T> &fpoint_pose_uid){
+                ROS_ASSERT(fpoint_pose_uid.size() == uid_list.size());
+                for (int i = 0; i < uid_list.size(); i++) {
+                    PointToBotTf<T>(fpoint_pose_uid[i], uid_list[i]);
+                }
+            }
+
         protected:
+            ros::NodeHandle nh;
             double proj_distance;
             double max_angular_vel;
             double min_angular_vel;
             double max_projection_dist;
             double min_projection_dist;
+            std::vector<std::string> uid_list;
+            tf2_ros::TransformBroadcaster tf_broadcaster;
+            tf2_ros::StaticTransformBroadcaster tf_static_broadcaster;
+            tf2_ros::Buffer tf_buffer;
+            geometry_msgs::TransformStamped transform_container;
+            std::string point_frame_id;
+            std::string parent_frame_id;
         
         protected:
             bool USE_ADAPTIVE_PROJECTION_DISTANCE;
@@ -131,4 +195,4 @@ namespace FormationUtils{
     };
 }
 
-#endif DYNAMICS_TF_H
+#endif // DYNAMICS_TF_H

@@ -15,6 +15,7 @@ find_package(catkin REQUIRED
     urdf
     urdf_parser_plugin
     tf2
+    eigen_conversions
 )
 
 find_package(cmake_modules REQUIRED)
@@ -141,6 +142,8 @@ add_library(${PROJECT_NAME}
   src/formation_graph_util.cpp
   src/utils.cpp
   src/formation_state_publisher.cpp
+  src/test_planner.cpp
+  src/dynamics_tf.cpp
 )
 
 ## Add cmake target dependencies of the library

@@ -213,6 +213,7 @@ namespace FormationUtils {
             }
             ROS_ASSERT(num_bots == uid_list.size());
             ROS_INFO("UIDs generated successfully.");
+            nh.setParam("/formation_config/uid_list", uid_list);
             return true;
         }
         else {

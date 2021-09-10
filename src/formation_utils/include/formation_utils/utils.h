@@ -20,6 +20,17 @@ typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> M
 }
 
 namespace FormationUtils{
+    
+    template <class T>
+    int findVectorElement(std::vector<T> &vec, T find_element) {
+        typename std::vector<T>::iterator it1 = std::find(vec.begin(), vec.end(), find_element);
+        int idx = std::distance(vec.begin(), it1);
+        if (!(idx < vec.size())) {
+            ROS_WARN("Request element not found in the vector provided.");
+        }
+        return idx;
+    }
+
 
     Eigen::Quaterniond euler_to_quaternion(float r, float p, float y);
 
@@ -62,6 +73,16 @@ namespace FormationUtils{
 
     template <class T>
     void floatMsgtoMatrixEigen(std_msgs::Float64MultiArray &msg, Eigen::MatrixBase<T> &mat) {
+        ROS_ASSERT(msg.layout.dim.size() == 2);
+        mat.resize(1, msg.layout.dim[0].stride);
+        for(int i = 0; i < msg.layout.dim[0].stride; i++) {
+            mat(0, i) = msg.data[i];
+        }
+        mat.resize(msg.layout.dim[0].size, msg.layout.dim[1].size);
+    }
+
+    template <class T>
+    void arrayMsgtoMatrixEigen(std_msgs::Float64MultiArray &msg, Eigen::MatrixBase<T> &mat) {
         ROS_ASSERT(msg.layout.dim.size() == 2);
         mat.resize(1, msg.layout.dim[0].stride);
         for(int i = 0; i < msg.layout.dim[0].stride; i++) {
