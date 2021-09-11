@@ -11,6 +11,7 @@ find_package(catkin REQUIRED
     roscpp
     formation_utils
     robot_state_publisher_modified
+    behavior_consensus_control
 )
 
 
@@ -143,6 +144,11 @@ add_executable(
     scripts/test_motion_planner.cpp
 )
 
+add_executable(
+    consensus_controller
+    scripts/consensus_controller.cpp
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -161,6 +167,11 @@ target_link_libraries(
 
 target_link_libraries(
     test_motion_planner
+    ${catkin_LIBRARIES}
+)
+
+target_link_libraries(
+    consensus_controller
     ${catkin_LIBRARIES}
 )
 #############

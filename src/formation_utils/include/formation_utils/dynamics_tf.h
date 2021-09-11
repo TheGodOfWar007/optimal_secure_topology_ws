@@ -174,6 +174,11 @@ namespace FormationUtils{
                 }
             }
 
+            void setDyamicsTfFlags(bool _USE_ADAPTIVE_PROJECTION_DISTANCE = false, bool _USE_STATIC_TRANSFORMS = true) {
+                USE_ADAPTIVE_PROJECTION_DISTANCE = _USE_ADAPTIVE_PROJECTION_DISTANCE;
+                USE_STATIC_TRANSFORMS = _USE_STATIC_TRANSFORMS;
+            }
+
         protected:
             ros::NodeHandle nh;
             double proj_distance;

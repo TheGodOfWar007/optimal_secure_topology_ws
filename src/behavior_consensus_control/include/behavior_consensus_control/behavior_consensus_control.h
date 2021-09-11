@@ -25,13 +25,11 @@ namespace FormationControl {
         }
         return main_str;
     }
-    class BehaviorConsensus2D : FormationUtils::ProjectionPoint2DTf {
+    class BehaviorConsensus2D : public FormationUtils::ProjectionPoint2DTf {
         public:
-            BehaviorConsensus2D(ros::NodeHandle _nh, std::string &_traj_topic_name, std::string &_odom_topic_name)
-            : nh(_nh),
-              traj_topic_name(_traj_topic_name),
-              odom_topic_name(_odom_topic_name)
-            {  }
+            BehaviorConsensus2D(ros::NodeHandle _nh)
+            : nh(_nh)
+            { max_fwd_vel = 1.0; }
 
             ~BehaviorConsensus2D();
 
@@ -41,6 +39,11 @@ namespace FormationControl {
                 odom_queue_size = _odom_queue_size;
                 traj_queue_size = _traj_queue_size;
                 cmd_vel_queue_size = _cmd_vel_queue_size;
+            }
+
+            void setTopicNames(std::string &_traj_topic_name, std::string &_odom_topic_name) {
+                traj_topic_name = _traj_topic_name;
+                odom_topic_name = _odom_topic_name;
             }
 
             void init();
@@ -54,6 +57,10 @@ namespace FormationControl {
             }
 
             void applyControlLaw();
+
+            void setMaxForwardVelocity(double _max_fwd_vel) {
+                max_fwd_vel = _max_fwd_vel;
+            }
 
 
         protected:
@@ -82,6 +89,7 @@ namespace FormationControl {
             uint32_t traj_queue_size;
             uint32_t cmd_vel_queue_size;
             double beta;
+            double max_fwd_vel; // m/s
 
             int current_odom_idx;
             int current_traj_idx;

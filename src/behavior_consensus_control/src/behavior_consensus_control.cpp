@@ -4,6 +4,7 @@ namespace FormationControl {
 
     void BehaviorConsensus2D::init()  {
         setUidList(uid_list);
+        num_bots = uid_list.size();
         ros::service::waitForService("/formation_graph/interface", -1);
         graph_interface_client = nh.serviceClient<formation_msgs::FormationGraphParams>("/formation_graph/interface");
         formation_msgs::FormationGraphParams graph_interface_msg;
@@ -93,6 +94,9 @@ namespace FormationControl {
             // Now filling the cmd_vel messages appropriately. Note that the twist 2d vector consists
             // of V w.r.t base_footprint x frame i.e. bot forward direction and omega i.e. about z axis
             // angular velocity component.
+            FormationUtils::saturation_function(bot_twists2d[i].y(), max_angular_vel, min_angular_vel);
+            double min_fwd_vel = 0;
+            FormationUtils::saturation_function(bot_twists2d[i].x(), max_fwd_vel, min_fwd_vel);
             cmd_vel[i].linear.x = bot_twists_2d[i].x();
             cmd_vel[i].linear.y = 0;
             cmd_vel[i].linear.z = 0;

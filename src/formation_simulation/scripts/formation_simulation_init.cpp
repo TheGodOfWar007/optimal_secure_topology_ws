@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 
     tb3_fake_loc.advertiseTransforms();
 
-    ros::Rate r(10);
+    ros::Rate r(30); // 30 Hz
 
     while(n.ok()) {
         // For now we will go by single threaded spinning. But as the number of packages

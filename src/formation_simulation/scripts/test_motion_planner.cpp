@@ -17,15 +17,28 @@ int main(int argc, char** argv) {
         }
     }
 
-    FormationUtils::TestMotionPlanner2D test_planner2d(n);
+    FormationUtils::CircleTrajectory2D circle_traj2d(n);
+    
+    circle_traj2d.load_params();
 
-    test_planner2d.load_params();
+    circle_traj2d.setFlags(true, true);
 
-    test_planner2d.setFlags(true);
+    circle_traj2d.publishShapeTransforms();
 
-    test_planner2d.publishShapeTransforms();
+    std::string traj_topic_name = "cmd_trajectory";
+    circle_traj2d.setTrajectoryPublishParams(traj_topic_name);
 
-    ros::Rate r(30); // Running this node at 30Hz.
+    circle_traj2d.init(); // initializes all the important publishers and subscribers.
+
+    Eigen::Vector2d circle_center(5.0, 5.0);
+    double theta_initial = 0; // rad
+    double radius = 5.0;
+    double time_period = 62.831; // sec
+    double rate = 30;
+
+    circle_traj2d.setParams(circle_center, theta_initial, radius, time_period, rate);
+
+    ros::Rate r(rate); // Running this node at 30Hz.
     // The rate of a node should be judiciously decided after experimental 
     // tests for considering the correct value of the rate so that you don't
     // lose out on important data or fill up the buffers with a lot more data
@@ -34,6 +47,15 @@ int main(int argc, char** argv) {
     while (n.ok()){
         // This node can make do with a single threaded spinner for now. 
         // Adding a multithreaded spinner will be considered in the near future.
+
+        // Step 1: Updating the Tf Buffers.
+        circle_traj2d.updateTfBuffers();
+
+        // Step 2: Updating the waypoint.
+        circle_traj2d.generateNextWaypoint();
+
+        // Step 3: Assuming the waypoint to be for the formation center. Transform and publish
+        circle_traj2d.transformAndPublishTrajectory();
 
         ros::spinOnce();
         r.sleep();
