@@ -31,7 +31,7 @@ namespace FormationControl {
             : nh(_nh)
             { max_fwd_vel = 1.0; }
 
-            ~BehaviorConsensus2D();
+            ~BehaviorConsensus2D() { };
 
             void setParams(std::vector<std::string> &_uid_list, uint32_t _odom_queue_size=10, uint32_t _traj_queue_size=10, uint32_t _cmd_vel_queue_size=10) {
                 uid_list = _uid_list;

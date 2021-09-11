@@ -44,6 +44,10 @@ int main(int argc, char** argv) {
     // lose out on important data or fill up the buffers with a lot more data
     // than needed. A moderate amount is fine.
 
+    // Adding a hard wait to wait for the robots to spawn. This hard wait will
+    // be replaced by a service soon.
+    ros::Duration(15).sleep();
+
     while (n.ok()){
         // This node can make do with a single threaded spinner for now. 
         // Adding a multithreaded spinner will be considered in the near future.

@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     bcc.publishTransformsByUID();
 
     // Lets wait till all the bots finish spawning. 
-    ros::Duration(10).sleep();
+    ros::Duration(15).sleep();
     // This hard coded wait will be replaced by a wait on a service
     // indicating the exact completion of the bot spawn.
 
