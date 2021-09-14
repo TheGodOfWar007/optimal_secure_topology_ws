@@ -52,8 +52,17 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
   <depend>formation_utils</depend>
   <depend>robot_state_publisher_modified</depend>
+  <depend>behavior_consensus_control</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_eigen</depend>
+  <depend>eigen_conversions</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>Eigen3</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -44,7 +44,7 @@ namespace FormationUtils {
         }
 
         if(!(req.REQUESTING_PARAMS || req.UPDATING_ADJACENCY_MATRIX)) {
-            ROS_WARN("Nothing requested from the graph parameter service.");
+            ROS_WARN("Nothing requested from the graph parameter service. All received flags were false.");
         }
 
         return true;

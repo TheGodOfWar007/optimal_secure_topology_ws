@@ -1,6 +1,8 @@
 #include <behavior_consensus_control/behavior_consensus_control.h>
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <ros/service_client.h>
+#include <XmlRpcValue.h>
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "consensus_controller_node");
@@ -22,28 +24,49 @@ int main(int argc, char** argv) {
     std::string odom_topic_name = "odom";
     std::vector<std::string> uid_list = {"BOT1", "BOT2", "BOT3", "BOT4", "BOT5"};
     bcc.setTopicNames(traj_topic_name, odom_topic_name);
+    ROS_INFO_STREAM("UID_LIST size given: " << uid_list.size());
     bcc.setParams(uid_list);
 
     // The most important part is the rate, it should be judiciously decided;
 
     ros::Rate r(30); // 30 Hz
-    bcc.init();
-    bcc.setAngularVelocityLimits(0.6, -0.6);
+    Eigen::MatrixXdRowMajor A;
+    XmlRpc::XmlRpcValue AConfig;
+    n.getParam("/formation_graph/A", AConfig);
+    FormationUtils::xmlrpc_to_matrix<Eigen::MatrixXdRowMajor>(uid_list.size(), uid_list.size(), AConfig, A);
+    XmlRpc::XmlRpcValue initialPoseConfig;
+    int num_bots;
+    n.getParam("/formation_config/num_bots", num_bots);
+    n.getParam("/formation_config/initial_pose", initialPoseConfig);
+    Eigen::MatrixXdRowMajor initial_pose;
+    FormationUtils::xmlrpc_to_matrix<Eigen::MatrixXdRowMajor>(num_bots, 6, initialPoseConfig, initial_pose);
+
+    bcc.init(A, initial_pose);
+
+    bcc.pp_2dtf.setAngularVelocityLimits(0.6, -0.6);
+
     bcc.setMaxForwardVelocity(1.0);
-    bcc.setProjectionDistance(0.01);
-    bcc.setProjectionDistanceLimits(1, -1); // This one doesn't matter unless the projection distance is being governed by any adaptive law.
-    double beta = 2.0;
-    bcc.setControllerConstants(beta);
-    bcc.setFrameIDs("projection_point", "base_footprint"); // Setting the tf to be from base_footprint to the point.
-    bcc.setDyamicsTfFlags(false, true); // Using default arguments, could have left it empty as well.
 
-    bcc.publishTransformsByUID();
+    bcc.pp_2dtf.setProjectionDistance(0.01);
 
+    bcc.pp_2dtf.setProjectionDistanceLimits(1, 0.01); // This one doesn't matter unless the projection distance is being governed by any adaptive law.
+
+    double beta = 0.01;
+    double clsm = 0.1;
+    bcc.setControllerConstants(beta, clsm);
+
+    bcc.pp_2dtf.setFrameIDs("projection_point", "base_footprint"); // Setting the tf to be from base_footprint to the point.
+
+    bcc.pp_2dtf.setDyamicsTfFlags(false, true); // Using default arguments, could have left it empty as well.
+    
+    bcc.pp_2dtf.publishTransformsByUID();
     // Lets wait till all the bots finish spawning. 
-    ros::Duration(15).sleep();
+    ROS_INFO("Waiting on the Trajectory Broadcast Trigger.");
+    ros::service::waitForService("test_controller/trajectory_broadcast_trigger_srv");
+    ROS_INFO("Calling the control law.");
     // This hard coded wait will be replaced by a wait on a service
     // indicating the exact completion of the bot spawn.
-
+    
     while (n.ok()) {
         // Apply the control law within here since it will publish the cmd_vel.
         // The velocity publishing will be at the frequency of this node which

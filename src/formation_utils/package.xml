@@ -54,7 +54,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>cmake_modules</depend>
-  <depend>Eigen</depend>
+  <depend>Eigen3</depend>
   <depend>formation_msgs</depend>
   <depend>orocos-kdl</depend>
   <depend>kdl_parser</depend>
@@ -62,6 +62,13 @@
   <depend>urdf_parser_plugin</depend>
   <depend>robot_state_publisher_modified</depend>
   <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>Boost</depend>
 
 
 

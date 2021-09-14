@@ -47,6 +47,7 @@ namespace FormationUtils{
             Eigen::Vector3d extractRPYfromQuaternionMsg(geometry_msgs::Quaternion &m){
                 Eigen::Quaterniond q;
                 tf::quaternionMsgToEigen(m, q);
+                ROS_INFO_STREAM("Extract RPY Q: " << q.vec());
                 Eigen::Vector3d rpy = quaternion_to_euler(q);
                 return rpy;
             }
@@ -64,6 +65,9 @@ namespace FormationUtils{
             ProjectionPoint2DTf() { 
                 proj_distance = 0.1; // metres
                 max_angular_vel = M_PI; // rad/s
+                min_angular_vel = -M_PI;
+                max_projection_dist = 1.00;
+                min_projection_dist = 0.01;
             }
 
             ProjectionPoint2DTf(double _proj_distance) : proj_distance(_proj_distance)
@@ -71,6 +75,8 @@ namespace FormationUtils{
                 ROS_ASSERT(proj_distance > 0);
                 max_angular_vel = M_PI;
                 min_angular_vel = -M_PI;
+                max_projection_dist = 1.00;
+                min_projection_dist = 0.01;
             };
 
             ProjectionPoint2DTf(double _proj_distance, double _max_angular_vel)
@@ -79,6 +85,8 @@ namespace FormationUtils{
               min_angular_vel(-_max_angular_vel)
             {
                 ROS_ASSERT(proj_distance > 0 && max_angular_vel > 0);
+                max_projection_dist = 1.00;
+                min_projection_dist = 0.01;
             };
 
             ProjectionPoint2DTf(double _proj_distance, double _max_angular_vel, double _min_angular_vel) 
@@ -87,6 +95,8 @@ namespace FormationUtils{
               min_angular_vel(_min_angular_vel)
             {
                 ROS_ASSERT(proj_distance > 0 && max_angular_vel > 0);
+                max_projection_dist = 1.00;
+                min_projection_dist = 0.01;
             }
 
             ~ProjectionPoint2DTf() { };
@@ -98,6 +108,10 @@ namespace FormationUtils{
             // Eigen::Vector2d SiToUniDynamicsStateTf(Eigen::Vector2d &point_pos, double &theta);
 
             Eigen::Vector2d SiToUniDynamicsTwistTf(Eigen::Vector2d point_vel, double theta);
+
+            void setNodeHandle(ros::NodeHandle &_nh) {
+                nh = _nh;
+            }
 
             void setProjectionDistance(double _proj_distance){
                 proj_distance = _proj_distance; 
@@ -132,7 +146,10 @@ namespace FormationUtils{
             }
 
             void setUidList(std::vector<std::string> _uid_list) {
-                uid_list = _uid_list;
+                num_bots = _uid_list.size();
+                for (int i = 0; i < num_bots; i++) {
+                    uid_list.push_back(_uid_list[i]);
+                }
             }
 
             void setFrameIDs(const std::string _point_frame_id, const std::string _parent_frame_id) {
@@ -152,8 +169,14 @@ namespace FormationUtils{
             }
 
             template <class T>
+            void BotToPointTfStored(T &pose){
+                tf2::doTransform<T>(pose, pose, bot_to_point_tf);
+            }
+
+            template <class T>
             void BotToPointTfByUID(std::vector<T> &fpose_uid){
-                ROS_ASSERT(fpose_uid.size() == uid_list.size());
+                ROS_INFO_STREAM("FPose Size: " << fpose_uid.size());
+                ROS_ASSERT(fpose_uid.size() == num_bots);
                 for (int i = 0; i < uid_list.size(); i++) {
                     BotToPointTf<T>(fpose_uid[i], uid_list[i]);
                 }
@@ -167,8 +190,13 @@ namespace FormationUtils{
             }
 
             template <class T>
+            void PointToBotTfStored(T &point_pose){
+                tf2::doTransform<T>(point_pose, point_pose, point_to_bot_tf);
+            }
+
+            template <class T>
             void PointToBotTfByUID(std::vector<T> &fpoint_pose_uid){
-                ROS_ASSERT(fpoint_pose_uid.size() == uid_list.size());
+                ROS_ASSERT(fpoint_pose_uid.size() == num_bots);
                 for (int i = 0; i < uid_list.size(); i++) {
                     PointToBotTf<T>(fpoint_pose_uid[i], uid_list[i]);
                 }
@@ -178,7 +206,11 @@ namespace FormationUtils{
                 USE_ADAPTIVE_PROJECTION_DISTANCE = _USE_ADAPTIVE_PROJECTION_DISTANCE;
                 USE_STATIC_TRANSFORMS = _USE_STATIC_TRANSFORMS;
             }
-
+        
+        public: 
+            std::vector<geometry_msgs::TransformStamped> tf_vector;
+            geometry_msgs::TransformStamped bot_to_point_tf;
+            geometry_msgs::TransformStamped point_to_bot_tf;
         protected:
             ros::NodeHandle nh;
             double proj_distance;
@@ -193,6 +225,7 @@ namespace FormationUtils{
             geometry_msgs::TransformStamped transform_container;
             std::string point_frame_id;
             std::string parent_frame_id;
+            int num_bots;
         
         protected:
             bool USE_ADAPTIVE_PROJECTION_DISTANCE;

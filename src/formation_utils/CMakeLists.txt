@@ -15,11 +15,18 @@ find_package(catkin REQUIRED
     urdf
     urdf_parser_plugin
     tf2
+    tf2_ros
+    tf2_geometry_msgs
     eigen_conversions
+    std_msgs
+    std_srvs
+    geometry_msgs
+    nav_msgs
 )
 
 find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
 
 find_library(KDL_LIBRARY REQUIRED NAMES orocos-kdl HINTS ${orocos_kdl_LIBRARY_DIRS})
 
@@ -120,7 +127,8 @@ catkin_package(
       formation_msgs
       robot_state_publisher_modified
     DEPENDS 
-      Eigen
+      Eigen3
+      Boost
 )
 
 ###########
@@ -132,7 +140,7 @@ catkin_package(
 include_directories(
     include
     ${robot_state_publisher_modified_INCLUDE_DIRS}
-    ${Eigen_INCLUDE_DIRS}
+    ${Eigen3_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 )
 

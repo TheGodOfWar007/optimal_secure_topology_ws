@@ -51,12 +51,13 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>formation_utils</depend>
-  <depend>Eigen</depend>
+  <depend>Eigen3</depend>
   <depend>eigen_conversions</depend>
   <depend>tf2_ros</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>formation_msgs</depend>
+  <depend>Boost</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -20,8 +20,14 @@ namespace FormationUtils {
         ROS_ASSERT(leader_idx < uid_list.size());
         std::vector<geometry_msgs::TransformStamped> tf_transforms;
         geometry_msgs::TransformStamped tf_transform;
+
         for(int i = 0; i < num_bots; i++) {
             if (i == leader_idx) {
+                tf_transform.header.frame_id = planner_center;
+                tf_transform.child_frame_id = uid_list[i];
+                tf::vectorEigenToMsg(Eigen::Vector3d(0, 0, 0), tf_transform.transform.translation);
+                tf_transform.transform.rotation = tf2::toMsg(Eigen::Quaterniond::Identity());
+                tf_vector.push_back(tf_transform);
                 continue;
             }
             tf_transform.header.frame_id = planner_center;
@@ -31,17 +37,21 @@ namespace FormationUtils {
             tf_transform.transform.rotation = tf2::toMsg(Eigen::Quaterniond::Identity());
             
             tf_transforms.push_back(tf_transform);
+            tf_vector.push_back(tf_transform);
         }
 
         if(USE_STATIC_TRANSFORM) {
             static_tf_broadcaster.sendTransform(tf_transforms);
+            ROS_INFO("Publishing static shape transforms.");
         }
         else {
             tf_broadcaster.sendTransform(tf_transforms);
+            ROS_INFO("Publishing non-static transforms.");
         }
     }
 
     void TestMotionPlanner2D::init(){
+        
         for (int i = 0; i < num_bots; i++) {
             ros::Publisher traj_pub;
             formation_msgs::PoseUID empty_pose_uid_msg;
@@ -53,12 +63,20 @@ namespace FormationUtils {
     }
 
     void TestMotionPlanner2D::updateTfBuffers() {
+        tf2_ros::Buffer tf_buffer;
         tf2_ros::TransformListener tf_listener(tf_buffer);
         for (int i = 0; i < num_bots; i++) {
             if (i == planner_center_idx) {
                 continue;
             }
-            tf_vector[i] = tf_buffer.lookupTransform(planner_center, uid_list[i], ros::Time::now());
+            if (USE_STATIC_TRANSFORM) {
+                ROS_INFO_STREAM("Can Transform: " << tf_buffer.canTransform(uid_list[i], planner_center, ros::Time(0)));
+                tf_vector[i] = tf_buffer.lookupTransform(uid_list[i], planner_center, ros::Time(0), ros::Duration(-1));
+            }
+            else {
+                ROS_INFO_STREAM("Can Transform: " << tf_buffer.canTransform(uid_list[i], planner_center, ros::Time(0)));
+                tf_vector[i] = tf_buffer.lookupTransform(uid_list[i], planner_center, ros::Time(0), ros::Duration(-1));
+            }
         }
     }
 
@@ -78,9 +96,20 @@ namespace FormationUtils {
         }
     }
 
+    bool CircleTrajectory2D::trajBroadcastTriggerCB(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
+        res.success = true;
+        res.message = "Trajectory Broadcasting has started.";
+        return true;
+    }
+
+    void CircleTrajectory2D::trajBroadcastTriggerSrvAdvertise() {
+        trajectory_broadcast_trigger_srv = nh.advertiseService("test_controller/trajectory_broadcast_trigger_srv", &CircleTrajectory2D::trajBroadcastTriggerCB, this);
+    }
+
     void CircleTrajectory2D::generateNextWaypoint(){
         if (!_stop_iteration) {
             if (planner_iteration == 0) {
+                trajBroadcastTriggerSrvAdvertise();
                 t_ini = ros::Time::now();
             }
             t_curr = ros::Time::now();
@@ -101,6 +130,7 @@ namespace FormationUtils {
             planner_center_goal.pose.position.y = current_coord.y();
             planner_center_goal.pose.position.z = 0;
             tf::quaternionEigenToMsg(Eigen::Quaterniond::Identity(), planner_center_goal.pose.orientation);
+            planner_iteration++;
         }
         else {
             current_coord = last_coord;

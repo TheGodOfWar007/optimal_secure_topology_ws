@@ -12,7 +12,7 @@
 #define DEG2RAD(x)              (x * M_PI/180) // x*pi/180
 #define RAD2DEG(x)              (x * 180/M_PI) // x*180/pi
 
-#define pass                    (void)0 // Similar to python's pass. Defined for any possible future use. You are advised against using this though unless very necessary.
+#define pass                    (void)0 // Similar to python's pass. Defined for any possible future use. You are advised against using this unless it is very very necessary/you are out of options.
 
 namespace Eigen {
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXfRowMajor;
@@ -71,6 +71,26 @@ namespace FormationUtils{
         }
     }
 
+    template <class T1, class T2>
+    void matrixEigentoArrayMsg(Eigen::MatrixBase<T1> &mat, T2 &msg) {
+        if (msg.layout.dim.size() != 2){
+            msg.layout.dim.resize(2);
+        }
+        msg.layout.dim[0].stride = mat.rows() * mat.cols();
+        msg.layout.dim[0].size = mat.rows();
+        msg.layout.dim[1].stride = mat.cols();
+        msg.layout.dim[1].size = mat.cols();
+        if ((int)msg.data.size() != mat.size()){
+            msg.data.resize(mat.size());
+        }
+        int ii = 0;
+        for (int i = 0; i < mat.rows(); ++i) {
+            for (int j = 0; j < mat.cols(); ++j) {
+            msg.data[ii++] = mat.coeff(i, j);
+            }
+        }
+    }
+
     template <class T>
     void floatMsgtoMatrixEigen(std_msgs::Float64MultiArray &msg, Eigen::MatrixBase<T> &mat) {
         ROS_ASSERT(msg.layout.dim.size() == 2);
@@ -81,8 +101,9 @@ namespace FormationUtils{
         mat.resize(msg.layout.dim[0].size, msg.layout.dim[1].size);
     }
 
-    template <class T>
-    void arrayMsgtoMatrixEigen(std_msgs::Float64MultiArray &msg, Eigen::MatrixBase<T> &mat) {
+    template <class T1, class T2>
+    void arrayMsgtoMatrixEigen(T1 &msg, Eigen::MatrixBase<T2> &mat) {
+
         ROS_ASSERT(msg.layout.dim.size() == 2);
         mat.resize(1, msg.layout.dim[0].stride);
         for(int i = 0; i < msg.layout.dim[0].stride; i++) {

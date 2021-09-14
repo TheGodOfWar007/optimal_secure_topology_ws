@@ -39,6 +39,11 @@ namespace FormationUtils{
         tf_transform.transform.rotation = tf2::toMsg(Eigen::Quaterniond::Identity());
 
         tf_transforms.push_back(tf_transform);
+        bot_to_point_tf = tf_transform;
+        Eigen::Isometry3d point_to_bot_tf_eigen;
+        point_to_bot_tf_eigen = tf2::transformToEigen(tf_transform);
+        point_to_bot_tf_eigen = point_to_bot_tf_eigen.inverse();
+        point_to_bot_tf = tf2::eigenToTransform(point_to_bot_tf_eigen);
 
         if(USE_STATIC_TRANSFORMS && !USE_ADAPTIVE_PROJECTION_DISTANCE) {
             tf_static_broadcaster.sendTransform(tf_transforms);

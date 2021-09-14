@@ -13,12 +13,14 @@ find_package(catkin REQUIRED
     formation_msgs
     geometry_msgs
     nav_msgs
+    std_msgs
     tf2_ros
     eigen_conversions
 )
 
 find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -116,8 +118,8 @@ catkin_package(
     formation_msgs
     tf2_ros
   DEPENDS
-    Eigen
-
+    Eigen3
+    Boost
 )
 
 ###########
@@ -128,7 +130,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
-    ${Eigen_INCLUDE_DIRS}
+    ${Eigen3_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 )
 

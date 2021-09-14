@@ -30,10 +30,10 @@ int main(int argc, char** argv) {
 
     circle_traj2d.init(); // initializes all the important publishers and subscribers.
 
-    Eigen::Vector2d circle_center(5.0, 5.0);
-    double theta_initial = 0; // rad
-    double radius = 5.0;
-    double time_period = 62.831; // sec
+    Eigen::Vector2d circle_center(5.0, 5.0); // m
+    double theta_initial = 3*M_PI/2; // rad
+    double radius = 5.0; // m
+    double time_period = 90; // sec
     double rate = 30;
 
     circle_traj2d.setParams(circle_center, theta_initial, radius, time_period, rate);
@@ -46,14 +46,14 @@ int main(int argc, char** argv) {
 
     // Adding a hard wait to wait for the robots to spawn. This hard wait will
     // be replaced by a service soon.
-    ros::Duration(15).sleep();
+    ros::Duration(60).sleep();
 
     while (n.ok()){
         // This node can make do with a single threaded spinner for now. 
         // Adding a multithreaded spinner will be considered in the near future.
 
         // Step 1: Updating the Tf Buffers.
-        circle_traj2d.updateTfBuffers();
+        // circle_traj2d.updateTfBuffers();
 
         // Step 2: Updating the waypoint.
         circle_traj2d.generateNextWaypoint();

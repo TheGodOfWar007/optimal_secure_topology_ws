@@ -9,10 +9,18 @@ project(formation_simulation)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
     roscpp
+    behavior_consensus_control
     formation_utils
     robot_state_publisher_modified
-    behavior_consensus_control
+    tf2
+    tf2_ros
+    tf2_eigen
+    tf2_geometry_msgs
+    eigen_conversions
 )
+
+find_package(cmake_modules REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 
 ## System dependencies are found with CMake's conventions
@@ -119,6 +127,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
     include
+    ${Eigen3_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 )
 
@@ -162,16 +171,19 @@ add_executable(
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
     formation_simulation_init
+    ${EIGEN3_LIBS}
     ${catkin_LIBRARIES}
 )
 
 target_link_libraries(
     test_motion_planner
+    ${EIGEN3_LIBS}
     ${catkin_LIBRARIES}
 )
 
 target_link_libraries(
     consensus_controller
+    ${EIGEN3_LIBS}
     ${catkin_LIBRARIES}
 )
 #############

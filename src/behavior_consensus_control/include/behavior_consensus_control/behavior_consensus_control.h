@@ -15,6 +15,10 @@
 #include <formation_msgs/FormationGraphParams.h>
 #include <formation_msgs/FormationGraphParamsRequest.h>
 #include <formation_msgs/FormationGraphParamsResponse.h>
+#include <Eigen/Dense>
+#include <std_msgs/Float64MultiArray.h>
+#include <boost/bind/bind.hpp>
+#include <boost/shared_ptr.hpp>
 
 
 namespace FormationControl {
@@ -25,7 +29,7 @@ namespace FormationControl {
         }
         return main_str;
     }
-    class BehaviorConsensus2D : public FormationUtils::ProjectionPoint2DTf {
+    class BehaviorConsensus2D {
         public:
             BehaviorConsensus2D(ros::NodeHandle _nh)
             : nh(_nh)
@@ -34,8 +38,11 @@ namespace FormationControl {
             ~BehaviorConsensus2D() { };
 
             void setParams(std::vector<std::string> &_uid_list, uint32_t _odom_queue_size=10, uint32_t _traj_queue_size=10, uint32_t _cmd_vel_queue_size=10) {
-                uid_list = _uid_list;
-                num_bots = uid_list.size();
+                num_bots = _uid_list.size();
+                pp_2dtf.setUidList(_uid_list);
+                for (int i = 0; i < num_bots; i++) {
+                    uid_list.push_back(_uid_list[i]);
+                }
                 odom_queue_size = _odom_queue_size;
                 traj_queue_size = _traj_queue_size;
                 cmd_vel_queue_size = _cmd_vel_queue_size;
@@ -48,12 +55,17 @@ namespace FormationControl {
 
             void init();
 
-            void odomSubscriberCallback(const nav_msgs::Odometry &odom_msg);
+            void init(Eigen::MatrixXdRowMajor _A);
 
-            void trajSubscriberCallback(const formation_msgs::PoseUID &traj_msg);
+            void init(Eigen::MatrixXdRowMajor _A, Eigen::MatrixXdRowMajor initial_pose);
 
-            void setControllerConstants(double &_beta) {
+            void odomSubscriberCallback(const boost::shared_ptr<nav_msgs::Odometry const> odom_msg, int bot_idx);
+
+            void trajSubscriberCallback(const boost::shared_ptr<formation_msgs::PoseUID const> traj_msg, int bot_idx);
+
+            void setControllerConstants(double _beta = 0.01, double _clsm = 0.01) {
                 beta = _beta;
+                clsm = _clsm;
             }
 
             void applyControlLaw();
@@ -62,10 +74,13 @@ namespace FormationControl {
                 max_fwd_vel = _max_fwd_vel;
             }
 
+        public:
+            FormationUtils::ProjectionPoint2DTf pp_2dtf;
 
         protected:
             ros::NodeHandle nh;
             int num_bots;
+
             std::string traj_topic_name;
             std::string odom_topic_name;
             std::vector<ros::Subscriber> traj_sub;
@@ -75,7 +90,6 @@ namespace FormationControl {
             std::vector<nav_msgs::Odometry> bot_odoms;
             std::vector<geometry_msgs::Pose> bot_odom_poses;
             std::vector<formation_msgs::PoseUID> traj_goals;
-            std::vector<Eigen::Vector2d> bot_twists2d;
             std::vector<Eigen::Vector2d> point_velocities2d;
             std::vector<geometry_msgs::Twist> cmd_vel;
             ros::Subscriber ros_subscriber;
@@ -89,6 +103,7 @@ namespace FormationControl {
             uint32_t traj_queue_size;
             uint32_t cmd_vel_queue_size;
             double beta;
+            double clsm;
             double max_fwd_vel; // m/s
 
             int current_odom_idx;
