@@ -28,5 +28,5 @@
     <node name="test_trajectory_node" pkg="formation_simulation" type="test_motion_planner"/>
 
     <!-- Starting the consensus controller node -->
-    <node name="consensus_controller_node" pkg="formation_simulation" type="consensus_controller"/>
+    <!-- <node name="consensus_controller_node" pkg="formation_simulation" type="consensus_controller"/> -->
 </launch>

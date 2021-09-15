@@ -47,7 +47,7 @@ namespace FormationUtils{
             Eigen::Vector3d extractRPYfromQuaternionMsg(geometry_msgs::Quaternion &m){
                 Eigen::Quaterniond q;
                 tf::quaternionMsgToEigen(m, q);
-                ROS_INFO_STREAM("Extract RPY Q: " << q.vec());
+                q.normalize();
                 Eigen::Vector3d rpy = quaternion_to_euler(q);
                 return rpy;
             }

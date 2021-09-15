@@ -13,6 +13,7 @@ namespace FormationUtils{
     }
 
     Eigen::Vector3d quaternion_to_euler(Eigen::Quaterniond q) {
+        q.normalize();
         return q.toRotationMatrix().eulerAngles(0,1,2);
     }
 

@@ -22,14 +22,15 @@ int main(int argc, char** argv) {
 
     std::string traj_topic_name = "cmd_trajectory";
     std::string odom_topic_name = "odom";
-    std::vector<std::string> uid_list = {"BOT1", "BOT2", "BOT3", "BOT4", "BOT5"};
+    // std::vector<std::string> uid_list = {"BOT1", "BOT2", "BOT3", "BOT4", "BOT5"};
+    std::vector<std::string> uid_list = {"BOT1"};
     bcc.setTopicNames(traj_topic_name, odom_topic_name);
     ROS_INFO_STREAM("UID_LIST size given: " << uid_list.size());
     bcc.setParams(uid_list);
 
     // The most important part is the rate, it should be judiciously decided;
-
-    ros::Rate r(30); // 30 Hz
+    double rate = 80; // Hz
+    ros::Rate r(rate); 
     Eigen::MatrixXdRowMajor A;
     XmlRpc::XmlRpcValue AConfig;
     n.getParam("/formation_graph/A", AConfig);
@@ -43,17 +44,23 @@ int main(int argc, char** argv) {
 
     bcc.init(A, initial_pose);
 
-    bcc.pp_2dtf.setAngularVelocityLimits(0.6, -0.6);
+    // Using the velocity limits for Turtlebot3 Burger as specified by the hardware specs.
 
-    bcc.setMaxForwardVelocity(1.0);
+    bcc.pp_2dtf.setAngularVelocityLimits(BURGER_MAX_ANG_VEL, -BURGER_MAX_ANG_VEL); // rad/sec
 
-    bcc.pp_2dtf.setProjectionDistance(0.01);
+    bcc.setMaxForwardVelocity(BURGER_MAX_VEL); // m/s
+
+    bcc.pp_2dtf.setProjectionDistance(0.1);
 
     bcc.pp_2dtf.setProjectionDistanceLimits(1, 0.01); // This one doesn't matter unless the projection distance is being governed by any adaptive law.
 
-    double beta = 0.01;
-    double clsm = 0.1;
-    bcc.setControllerConstants(beta, clsm);
+    double beta = 0.001;
+    double clsm = 0.01;
+    bcc.setControllerConstants(beta, clsm, rate);
+    double kp = 0.1;
+    double kd = 0.01;
+    double ki = 0.001;
+    bcc.setPIDControllerConstants(kp, ki, kd, rate);
 
     bcc.pp_2dtf.setFrameIDs("projection_point", "base_footprint"); // Setting the tf to be from base_footprint to the point.
 
@@ -73,6 +80,7 @@ int main(int argc, char** argv) {
         // is why the publish rate is such an important parameter.
 
         bcc.applyControlLaw();
+        // bcc.applyVanillaPID();
 
         ros::spinOnce();
         r.sleep();

@@ -33,8 +33,9 @@ int main(int argc, char** argv) {
     Eigen::Vector2d circle_center(5.0, 5.0); // m
     double theta_initial = 3*M_PI/2; // rad
     double radius = 5.0; // m
-    double time_period = 90; // sec
-    double rate = 30;
+    // Executing the trajectory at half the maximum permissible speed of the turtlebot3
+    double time_period = 0.5*2*M_PI*radius/BURGER_MAX_VEL; // sec
+    double rate = 30; // Hz
 
     circle_traj2d.setParams(circle_center, theta_initial, radius, time_period, rate);
 
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
 
     // Adding a hard wait to wait for the robots to spawn. This hard wait will
     // be replaced by a service soon.
-    ros::Duration(60).sleep();
+    ros::Duration(30).sleep();
 
     while (n.ok()){
         // This node can make do with a single threaded spinner for now. 

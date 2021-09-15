@@ -63,9 +63,19 @@ namespace FormationControl {
 
             void trajSubscriberCallback(const boost::shared_ptr<formation_msgs::PoseUID const> traj_msg, int bot_idx);
 
-            void setControllerConstants(double _beta = 0.01, double _clsm = 0.01) {
+            void setControllerConstants(double _beta = 0.01, double _clsm = 0.01, double _rate = 80) {
                 beta = _beta;
                 clsm = _clsm;
+                rate = _rate;
+                delta_t = 1/rate;
+            }
+
+            void setPIDControllerConstants(double _kp, double _ki, double _kd, double _rate) {
+                kp = _kp;
+                ki = _ki;
+                kd = _kd;
+                rate = _rate; 
+                delta_t = 1/rate;
             }
 
             void applyControlLaw();
@@ -73,6 +83,8 @@ namespace FormationControl {
             void setMaxForwardVelocity(double _max_fwd_vel) {
                 max_fwd_vel = _max_fwd_vel;
             }
+
+            void applyVanillaPID();
 
         public:
             FormationUtils::ProjectionPoint2DTf pp_2dtf;
@@ -97,14 +109,21 @@ namespace FormationControl {
             ros::ServiceClient graph_interface_client;
             Eigen::MatrixXdRowMajor A;
             Eigen::MatrixXdRowMajor L;
+            double delta_t;
         
         protected:
             uint32_t odom_queue_size;
             uint32_t traj_queue_size;
             uint32_t cmd_vel_queue_size;
+            std::vector<Eigen::Vector2d> e_t_1;
+            std::vector<Eigen::Vector2d> e_i;
             double beta;
             double clsm;
             double max_fwd_vel; // m/s
+            double rate;
+            double kp;
+            double ki;
+            double kd;
 
             int current_odom_idx;
             int current_traj_idx;

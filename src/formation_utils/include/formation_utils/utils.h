@@ -14,6 +14,11 @@
 
 #define pass                    (void)0 // Similar to python's pass. Defined for any possible future use. You are advised against using this unless it is very very necessary/you are out of options.
 
+#define BURGER_MAX_VEL          0.22 // m/s
+#define BURGER_MAX_ANG_VEL      2.84 // rad/s
+#define WAFFLEPI_MAX_VEL        0.26 // m/s
+#define WAFFLEPI_MAX_ANG_VEL    1.82 // rad/s
+
 namespace Eigen {
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXfRowMajor;
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdRowMajor;

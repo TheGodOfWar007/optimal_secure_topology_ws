@@ -115,6 +115,11 @@ namespace FormationControl {
         bot_odom_poses.resize(num_bots);
         traj_goals.resize(num_bots);
         cmd_vel.resize(num_bots);
+        odom_sub.resize(num_bots);
+        traj_sub.resize(num_bots);
+        cmd_vel_pub.resize(num_bots);
+        e_t_1.resize(num_bots);
+        e_i.resize(num_bots);
         
         for (int i = 0; i < num_bots; i++) {
             tf::pointEigenToMsg(Eigen::Vector3d(initial_pose(i,0), initial_pose(i,1), initial_pose(i,2)), empty_odom_msg.pose.pose.position);
@@ -131,11 +136,13 @@ namespace FormationControl {
             // Binding the callbacks to take the index and fill the right vector element thus allowing the vector
             // of subscribers to send their information to the right element of the storing vector.
             ros_subscriber = nh.subscribe<nav_msgs::Odometry>(odom_topic_str, odom_queue_size, boost::bind(&BehaviorConsensus2D::odomSubscriberCallback, this, _1, i));
-            odom_sub.push_back(ros_subscriber);
+            odom_sub[i] = ros_subscriber;
             ros_subscriber = nh.subscribe<formation_msgs::PoseUID>(traj_topic_str, traj_queue_size, boost::bind(&BehaviorConsensus2D::trajSubscriberCallback, this, _1, i));
-            traj_sub.push_back(ros_subscriber);
+            traj_sub[i] = ros_subscriber;
             ros_publisher = nh.advertise<geometry_msgs::Twist>(cmd_vel_topic_name, cmd_vel_queue_size);
-            cmd_vel_pub.push_back(ros_publisher);
+            cmd_vel_pub[i] = ros_publisher;
+            e_t_1[i] = Eigen::Vector2d::Zero();
+            e_i[i] = Eigen::Vector2d::Zero();
         }
         
     }
@@ -148,10 +155,16 @@ namespace FormationControl {
         
         bot_odoms[bot_idx] = *odom_msg;
         bot_odom_poses[bot_idx] = odom_msg->pose.pose;
+        if (bot_idx == 0) {
+            ROS_DEBUG_STREAM("Odom CB Test Bot 1, x: " << odom_msg->pose.pose.position.x << " y: " << odom_msg->pose.pose.position.y);
+        }
     }
 
     void BehaviorConsensus2D::trajSubscriberCallback(const boost::shared_ptr<formation_msgs::PoseUID const> traj_msg, int bot_idx) {
         traj_goals[bot_idx] = *traj_msg;
+        if (bot_idx == 0) {
+            ROS_DEBUG_STREAM("Traj CB Test Bot 1, x: " << traj_msg->pose.position.x << " y: " << traj_msg->pose.position.y);
+        }
     }
 
     void BehaviorConsensus2D::applyControlLaw(){
@@ -214,7 +227,70 @@ namespace FormationControl {
             cmd_vel[i].angular.x = 0;
             cmd_vel[i].angular.y = 0;
             cmd_vel[i].angular.z = bot_twists_2d[i].y();
-            ROS_INFO_STREAM("BOT " << i << " cmd_vel V : " << bot_twists_2d[i].x() << " w : " << bot_twists_2d[i].y());
+        }
+
+        // Step 3: Now publishing the cmd_vel of all the bots together.
+        for (int i = 0; i < num_bots; i++){
+            cmd_vel_pub[i].publish(cmd_vel[i]);
+        }
+    }
+
+    void BehaviorConsensus2D::applyVanillaPID() {
+        // Step 1: Transforming the pose of the robots to the projection point.
+        
+        // Step 2: We will now apply the consensus law on the points which follow
+        // single integrator dynamics.
+        
+        std::vector<Eigen::Vector2d> bot_twists_2d(num_bots);
+        std::vector<Eigen::Vector2d> u_i_point(num_bots);
+        std::vector<double> theta_vec(num_bots);
+        Eigen::Vector2d p_i;
+        Eigen::Vector2d p_i_st;
+        Eigen::Vector2d p_j;
+        Eigen::Vector2d p_j_st;
+        Eigen::Vector2d e_t;
+        Eigen::Vector2d e_t_dot;
+        for (int i = 0; i < num_bots; i++) {
+                    
+            pp_2dtf.BotToPointTfStored<geometry_msgs::Pose>(bot_odom_poses[i]);
+            p_i.x() = bot_odom_poses[i].position.x;
+            p_i.y() = bot_odom_poses[i].position.y;
+            
+            p_i_st.x() = traj_goals[i].pose.position.x;
+            p_i_st.y() = traj_goals[i].pose.position.y;
+            e_t = p_i - p_i_st;
+            e_t_dot = (e_t - e_t_1[i])/delta_t;
+            e_i[i] += e_t*delta_t;
+
+            e_t_1[i] = e_t;
+            // Applying the PID law.
+            u_i_point[i] = -(kp*e_t + kd*e_t_dot + ki*e_i[i]);
+            
+            Eigen::Vector3d rpy = pp_2dtf.extractRPYfromQuaternionMsg(bot_odom_poses[i].orientation);
+            theta_vec[i] = rpy(2); // Extracting yaw from r,p,y.
+            
+            // u_i_point is in si dynamics. We will now change the single integrator control input
+            // back to unicycle dynamics control input and use it to populate the cmd_vel vector.
+            bot_twists_2d[i] = pp_2dtf.SiToUniDynamicsTwistTf(u_i_point[i], theta_vec[i]);
+            
+
+            // Now filling the cmd_vel messages appropriately. Note that the twist 2d vector consists
+            // of V w.r.t base_footprint x frame i.e. bot forward direction and omega i.e. about z axis
+            // angular velocity component.
+            double max_angular_vel;
+            double min_angular_vel;
+            pp_2dtf.getAngularVelocityLimits(max_angular_vel, min_angular_vel);
+            FormationUtils::saturation_function(bot_twists_2d[i].y(), max_angular_vel, min_angular_vel);
+            double min_fwd_vel = 0;
+            FormationUtils::saturation_function(bot_twists_2d[i].x(), max_fwd_vel, min_fwd_vel);
+            
+            cmd_vel[i].linear.x = bot_twists_2d[i].x();
+            
+            cmd_vel[i].linear.y = 0;
+            cmd_vel[i].linear.z = 0;
+            cmd_vel[i].angular.x = 0;
+            cmd_vel[i].angular.y = 0;
+            cmd_vel[i].angular.z = bot_twists_2d[i].y();
         }
 
         // Step 3: Now publishing the cmd_vel of all the bots together.
