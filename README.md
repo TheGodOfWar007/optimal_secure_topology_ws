@@ -74,4 +74,4 @@ test_motion_planner: {
 }
 ```
 
-The package creates all the IDs for the agents (robots) and creates topics and services based on the communication graph represented by the adjacency matrices. The variable weights of the graph allow for consensus control based algorithms for robot formation control. This open up a lot of possibilites for testing multi-agent control applications in ROS-1.
+The package creates all the unique IDs (UIDs) for the robots (unless UIDs are already provided) and creates topics and services based on the communication graph represented by the adjacency matrices. The variable weights of the graph allow for consensus control based algorithms for robot formation control. This open up a lot of possibilites for testing multi-agent control applications in ROS-1.
